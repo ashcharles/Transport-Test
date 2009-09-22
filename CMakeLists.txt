@@ -1,0 +1,55 @@
+cmake_minimum_required(VERSION 2.6)
+
+OPTION (WITH_GUI "Enable building of Rapi GUI" ON )
+
+INCLUDE(FindPkgConfig)
+PKG_SEARCH_MODULE(RAPI REQUIRED autolab-rapi)
+PKG_SEARCH_MODULE(RAPISTAGE REQUIRED autolab-rapi-stage)
+PKG_SEARCH_MODULE(ND REQUIRED autolab-nd)
+PKG_SEARCH_MODULE(RAPIGUI REQUIRED autolab-rapi-gui)
+FIND_PACKAGE(Qt4)
+IF( QT_FOUND )
+  INCLUDE( ${QT_USE_FILE} )
+  ADD_DEFINITIONS( ${QT_DEFINITIONS} )
+  ADD_DEFINITIONS( -D_RAPI_GUI )
+ELSE( QT_FOUND )
+  MESSAGE( ERROR "Need QT libraries!" )
+ENDIF( QT_FOUND )
+
+
+INCLUDE_DIRECTORIES(
+  ${RAPI_INCLUDE_DIRS}
+  ${RAPISTAGE_INCLUDE_DIRS}
+  ${ND_INCLUDE_DIRS}
+  ${RAPIGUI_INCLUDE_DIRS}
+  ${QT_INCLUDE_DIR}
+)
+
+LINK_DIRECTORIES(
+  ${RAPI_LIBRARY_DIRS}
+  ${RAPISTAGE_LIBRARY_DIRS}
+  ${ND_LIBRARY_DIRS}
+  ${RAPIGUI_LIBRARY_DIRS}
+  ${QT_LIBRARY_DIRS}
+)
+
+ADD_DEFINITIONS(-g -Wall)
+
+ADD_LIBRARY( chatterbox MODULE
+  chatterbox.cpp
+  chatterboxctrl.cpp
+  waypoint.cpp
+)
+
+TARGET_LINK_LIBRARIES( chatterbox
+  ${RAPI_LIBRARIES}
+  ${RAPISTAGE_LIBRARIES}
+  ${ND_LIBRARIES}
+  ${RAPIGUI_LIBRARIES}
+  ${QT_LIBRARIES}
+)
+
+# delete the "lib" prefix from the plugin libraries
+SET_TARGET_PROPERTIES( chatterbox PROPERTIES PREFIX "" )
+
+MESSAGE(STATUS "Remember to add the module path to the STAGEPATH variable" )
