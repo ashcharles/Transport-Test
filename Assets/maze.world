@@ -6,15 +6,13 @@
 # Visualizations are provided by the obstacle avoidance viz library which
 # depends on both Stage and the obstacle avoidance library.
 # Author: Ash Charles
-include "pioneer.inc"
+include "chatterbox.inc"
+include "chatterbox_charger.inc"
 include "map.inc"
-include "sick.inc"
 
 interval_sim 100  # simulation timestep in milliseconds
-interval_real 20 # real-time interval between simulation updates in milliseconds 
 paused 1
 resolution 0.02
-threadpool 0
 
 # configure the GUI window
 window
@@ -61,9 +59,8 @@ zone
 
 define mazebot chatterbox 
 (		 
- sicklaser( samples 361 range_max 8 fov 360)
- ctrl "chatterbox"
- fiducial_return 0
+  ctrl "chatterbox"
+  joules  155520
 )
 
 mazebot( pose [20.000 -24.000  0 180.000] )

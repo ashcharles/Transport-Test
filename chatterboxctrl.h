@@ -108,12 +108,12 @@ class CChatterboxCtrl : public ARobotCtrl
     COdometry * mOdo;
     /** Data Logger */
     CDataLogger * mDataLogger;
-    /** Current position */
+    /** Current position (relative to robot) */
     CPose2d mRobotPose;
+    /** Absolution position from previous time step */
+    CPose2d mPreviousPose;
     /** Nearness Diagram (ND) obstacle avoider */
     CNd * mObstacleAvoider;
-    /** Current path */
-    CWaypointList * mPath;
     //------------- variables ------------//
     /** Robot name */
     std::string mName;

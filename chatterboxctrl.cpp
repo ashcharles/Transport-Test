@@ -35,7 +35,7 @@ const std::string StateNames[] = {"Start", "Work", "Load", "Dump",
 CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
     : ARobotCtrl( robot )
 {
-  PRT_STATUS( "\nStage Example of Chatterbox\n" );
+  PRT_STATUS( "\nStage Example of Chatterbox: Explore Maze\n" );
 
   // get robot devices
   mRobot->findDevice( mDrivetrain, "drivetrain:0" );
@@ -43,8 +43,6 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   mRobot->findDevice( mIr, "ranger:0" );
   mRobot->findDevice( mTextDisplay, "textdisplay:0" );
   mRobot->findDevice( mFrontFiducial, "fiducial:0" );
-  mRobot->findDevice( mLights, "lights:0" );
-  //mRobot->findDevice ( mLaser, "laser:0" );
 
   // Initialize robot
   char hostname[20];
@@ -62,12 +60,8 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   mObstacleAvoider = new CNd( 0.5, 0.5, 0.5 );
   mObstacleAvoider->addRangeFinder( mIr );
   assert( mObstacleAvoider );
-  mPath = new CWaypointList( "source2sink.txt" );
   mOdo = mDrivetrain->getOdometry();
-  mOdo->setPose(( mPath->findWaypoint( "start" ) )->getPose() );
-  mRobotPose = mOdo->getPose();
-  mPath->setCurrentWaypoint( "source" );
-  mPath->print();
+  mPreviousPose = mOdo->getPose();
 
   // set up timers (in seconds)
   mElapsedStateTime = 0.0;
@@ -86,9 +80,6 @@ CChatterboxCtrl::~CChatterboxCtrl()
 {
   if ( mObstacleAvoider ) {
     delete mObstacleAvoider;
-  }
-  if ( mPath ) {
-    delete mPath;
   }
 }
 //-----------------------------------------------------------------------------
@@ -119,8 +110,10 @@ bool CChatterboxCtrl::isChargerDetected()
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionWork()
 {
-  mObstacleAvoider->setGoal( CPose2d( mRobotPose.mX + 1.0,
-                                      mRobotPose.mY, mRobotPose.mYaw ) );
+  CPose2d goal = CPose2d( mRobotPose.mX + 1.0, mRobotPose.mY,
+                          mRobotPose.mYaw + D2R(-10.0) ); // right wall follow
+  mObstacleAvoider->setGoal( goal ); 
+  
   mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
   return IN_PROGRESS;
 }
@@ -136,11 +129,9 @@ tActionResult CChatterboxCtrl::actionLoad()
   if ( mIsStateChanged ) {
     mDrivetrain->stop();
     mOdo->setToZero();
-    mLights->setLight( ALL_LIGHTS, BLACK );
   }
 
   color.mGreen = ( color.mGreen < 110 ) ? color.mGreen + rate : 255;
-  mLights->setLight( loadCount, color );
   // We've filled an LED
   if ( color.mGreen >= 255 ) {
     loadCount = ( loadCount + 1 ) % 5;
@@ -167,7 +158,6 @@ tActionResult CChatterboxCtrl::actionDump()
     mDrivetrain->stop();
 
   color.mGreen = ( color.mGreen > rate ) ? color.mGreen - rate : 0;
-  mLights->setLight( loadCount, color );
   // We've filled an LED
   if ( color.mGreen <= 0 ) {
     printf( "Next!\n" );
@@ -186,7 +176,6 @@ tActionResult CChatterboxCtrl::actionDump()
 tActionResult CChatterboxCtrl::actionPause()
 {
   //TODO
-  mLights->setLight( ALL_LIGHTS, BLACK );
   mDrivetrain->stop();
   return IN_PROGRESS;
 }
@@ -200,7 +189,8 @@ void CChatterboxCtrl::updateData( float dt )
   mAccumulatedRunTime += dt;
   mVoltageLpf = mVoltageLpf + ( mRobot->getUpdateInterval() / TAU_VOLTAGE_LPF )
                 * ( mPowerPack->getVoltage() - mVoltageLpf );
-  mRobotPose = mOdo->getPose();
+  mRobotPose = mOdo->getPose() - mPreviousPose; // differential pose
+  mPreviousPose = mOdo->getPose();
   mDataLogger->write( mAccumulatedRunTime );
   mObstacleAvoider->update( mAccumulatedRunTime,
                             mDrivetrain->getOdometry()->getPose(),
