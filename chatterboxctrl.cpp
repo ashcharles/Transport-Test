@@ -35,7 +35,8 @@ const std::string StateNames[] = {"Start", "Work", "Load", "Dump",
 CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
     : ARobotCtrl( robot )
 {
-  PRT_STATUS( "\nStage Example of Chatterbox: Explore Maze\n" );
+  printf( "\n" );
+  PRT_STATUS( "\nStage Example of Chatterbox: Follow Waypoints\n" );
 
   // get robot devices
   mRobot->findDevice( mDrivetrain, "drivetrain:0" );
@@ -62,6 +63,8 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   assert( mObstacleAvoider );
   mOdo = mDrivetrain->getOdometry();
   mPreviousPose = mOdo->getPose();
+  CWaypointList * mPath = new CWaypointList( "waypoints.txt" );
+  mPath->print();
 
   // set up timers (in seconds)
   mElapsedStateTime = 0.0;
@@ -69,7 +72,7 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
 
   // Setup logging & rpc server
   char filename[40];
-  sprintf( filename, "logfile_%slog", mName.c_str() );
+  sprintf( filename, "logfile_%s.log", mName.c_str() );
   mDataLogger = CDataLogger::getInstance( filename , OVERWRITE, "#" );
   mDataLogger->addVar( &mRobotPose, "Pose" );
   mDataLogger->addVar( &mVoltageLpf, "Filtered Voltage" );
@@ -78,6 +81,10 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::~CChatterboxCtrl()
 {
+  if ( mPath ) {
+    delete mPath;
+  }
+
   if ( mObstacleAvoider ) {
     delete mObstacleAvoider;
   }
@@ -110,10 +117,12 @@ bool CChatterboxCtrl::isChargerDetected()
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionWork()
 {
-  CPose2d goal = CPose2d( mRobotPose.mX + 1.0, mRobotPose.mY,
-                          mRobotPose.mYaw + D2R(-10.0) ); // right wall follow
-  mObstacleAvoider->setGoal( goal ); 
-  
+//  CPose2d goal = CPose2d( mRobotPose.mX + 1.0, mRobotPose.mY,
+//                          mRobotPose.mYaw + D2R(-10.0) ); // right wall follow
+  mPath->update( mOdo->getPose() ); //TODO: this should be relative pose
+  CWaypoint2d goal = mPath->getWaypoint();
+
+  mObstacleAvoider->setGoal( goal.getPose() ); 
   mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
   return IN_PROGRESS;
 }

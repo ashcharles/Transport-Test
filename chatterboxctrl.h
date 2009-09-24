@@ -114,6 +114,8 @@ class CChatterboxCtrl : public ARobotCtrl
     CPose2d mPreviousPose;
     /** Nearness Diagram (ND) obstacle avoider */
     CNd * mObstacleAvoider;
+    /** Waypoint path */
+    CWaypointList * mPath;
     //------------- variables ------------//
     /** Robot name */
     std::string mName;

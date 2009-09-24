@@ -42,9 +42,38 @@ void CWaypointList::print()
     return;
   }
 
-  for( it = mWaypoints.begin(); it != mWaypoints.end(); it++ ) {
-    it->print();    
+  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
+    it->print();
   }
+}
+//----------------------------------------------------------------------------
+void CWaypointList::update( CPose2d myPose )
+{
+  std::list<CWaypoint2d>::iterator it;
+  if( mWaypoints.empty() ) {
+    printf( "Waypoint list is empty\n" );
+    return;
+  }
+
+  // find closest waypoint
+  std::list<CWaypoint2d>::iterator closestWaypoint;
+  double distToNearestWaypoint = INFINITY;
+  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
+    double distToWaypoint = myPose.distance( it->getPose() );
+    if( distToWaypoint < distToNearestWaypoint ) {
+      distToNearestWaypoint = distToWaypoint;
+      closestWaypoint = it;
+    }
+  }
+
+  // if we are at the waypoint, kick it off the list and move on
+  if( distToNearestWaypoint < 0.1 ) {
+    std::list<CWaypoint2d>::iterator oldWaypoint = closestWaypoint;
+    ++closestWaypoint;
+    mWaypoints.erase( oldWaypoint );
+    printf( "I moved to the next waypoint\n" );
+  }
+  mCurrentWaypoint = &(*closestWaypoint);
 }
 //----------------------------------------------------------------------------
 CWaypoint2d * CWaypointList::findWaypoint( std::string name)
@@ -59,18 +88,13 @@ CWaypoint2d * CWaypointList::findWaypoint( std::string name)
 //----------------------------------------------------------------------------
 void CWaypointList::setCurrentWaypoint( std::string name )
 {
-	mCurrentWaypoint = findWaypoint( name );
+  mCurrentWaypoint = findWaypoint( name );
 }
 //----------------------------------------------------------------------------
-CWaypoint2d * CWaypointList::getCurrentWaypoint()
+CWaypoint2d CWaypointList::getWaypoint()
 {
-	return mCurrentWaypoint;
-}
-//----------------------------------------------------------------------------
-CWaypoint2d * CWaypointList::getNextWaypoint()
-{
-	mCurrentWaypoint++;
-	return getCurrentWaypoint();
+  CWaypoint2d currentWaypoint = *mCurrentWaypoint;
+  return currentWaypoint;
 }
 //----------------------------------------------------------------------------
 //int main( int argc, char * argv[] )
