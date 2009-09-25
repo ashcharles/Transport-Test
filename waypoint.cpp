@@ -7,7 +7,7 @@ CWaypointList::CWaypointList( std::string filename )
 {
   FILE * file = fopen( filename.c_str(), "r" );
   if( file == NULL ) {
-    fprintf( stderr, "Can't open filen");
+    fprintf( stderr, "Waypoint: Can't open filen");
     exit( EXIT_FAILURE );
   }
 
@@ -18,6 +18,8 @@ CWaypointList::CWaypointList( std::string filename )
     char line [256];
     fgets( line, 256, file );
     int args = sscanf( line, "%f,%f,%f,%s\n", &x, &y, &yaw, name );
+    if ( feof( file) )
+      break;
     if (args < 3)
       continue;
     yaw = D2R(yaw);
@@ -26,6 +28,8 @@ CWaypointList::CWaypointList( std::string filename )
       waypoint.setLabel( name );
     mWaypoints.push_back( waypoint );
   }
+
+  mCurrentWaypoint = mWaypoints.front();
 
   fclose( file );
 }
@@ -56,44 +60,44 @@ void CWaypointList::update( CPose2d myPose )
   }
 
   // find closest waypoint
-  std::list<CWaypoint2d>::iterator closestWaypoint;
+  CWaypoint2d closestWaypoint;
   double distToNearestWaypoint = INFINITY;
   for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
     double distToWaypoint = myPose.distance( it->getPose() );
     if( distToWaypoint < distToNearestWaypoint ) {
       distToNearestWaypoint = distToWaypoint;
-      closestWaypoint = it;
+      closestWaypoint = *it;
     }
   }
 
   // if we are at the waypoint, kick it off the list and move on
-  if( distToNearestWaypoint < 0.1 ) {
-    std::list<CWaypoint2d>::iterator oldWaypoint = closestWaypoint;
-    ++closestWaypoint;
-    mWaypoints.erase( oldWaypoint );
-    printf( "I moved to the next waypoint\n" );
+  if( (distToNearestWaypoint < 1.0) && (mWaypoints.size() > 1) ) {
+    mWaypoints.pop_front();
+    closestWaypoint = mWaypoints.front();
+    printf( "I moved to the next waypoint:\n" );
+    closestWaypoint.getPose().print();
   }
-  mCurrentWaypoint = &(*closestWaypoint);
+  mCurrentWaypoint = closestWaypoint;
 }
 //----------------------------------------------------------------------------
-CWaypoint2d * CWaypointList::findWaypoint( std::string name)
-{
-  std::list<CWaypoint2d>::iterator it;
-  for( it = mWaypoints.begin(); it != mWaypoints.end(); it++ ) {
-    if( name == it->getLabel() )
-      return &(*it);
-  }
-  return NULL;
-}
-//----------------------------------------------------------------------------
-void CWaypointList::setCurrentWaypoint( std::string name )
-{
-  mCurrentWaypoint = findWaypoint( name );
-}
-//----------------------------------------------------------------------------
+//CWaypoint2d * CWaypointList::findWaypoint( std::string name)
+//{
+//  std::list<CWaypoint2d>::iterator it;
+//  for( it = mWaypoints.begin(); it != mWaypoints.end(); it++ ) {
+//    if( name == it->getLabel() )
+//      return &(*it);
+//  }
+//  return NULL;
+//}
+////----------------------------------------------------------------------------
+//void CWaypointList::setCurrentWaypoint( std::string name )
+//{
+//  mCurrentWaypoint = findWaypoint( name );
+//}
+////----------------------------------------------------------------------------
 CWaypoint2d CWaypointList::getWaypoint()
 {
-  CWaypoint2d currentWaypoint = *mCurrentWaypoint;
+  CWaypoint2d currentWaypoint = mCurrentWaypoint;
   return currentWaypoint;
 }
 //----------------------------------------------------------------------------

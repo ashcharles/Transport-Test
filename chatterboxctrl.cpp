@@ -30,7 +30,8 @@ const float FULLY_CHARGED_VOLTAGE_THRESHOLD = 16.75;
 const float MAX_CHARGING_TIME = 600.0;
 /** Array of State names for logging */
 const std::string StateNames[] = {"Start", "Work", "Load", "Dump",
-                                  "Pause", "Quit" };
+                                  "Pause", "Quit"
+                                 };
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
     : ARobotCtrl( robot )
@@ -63,7 +64,9 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   assert( mObstacleAvoider );
   mOdo = mDrivetrain->getOdometry();
   mPreviousPose = mOdo->getPose();
-  CWaypointList * mPath = new CWaypointList( "waypoints.txt" );
+  mPath = new CWaypointList( "waypoints.txt" );
+  if ( mPath == NULL )
+    printf( "Panic...waypoint failed\n" );
   mPath->print();
 
   // set up timers (in seconds)
@@ -122,7 +125,7 @@ tActionResult CChatterboxCtrl::actionWork()
   mPath->update( mOdo->getPose() ); //TODO: this should be relative pose
   CWaypoint2d goal = mPath->getWaypoint();
 
-  mObstacleAvoider->setGoal( goal.getPose() ); 
+  mObstacleAvoider->setGoal( goal.getPose() );
   mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
   return IN_PROGRESS;
 }

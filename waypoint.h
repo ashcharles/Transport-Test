@@ -14,13 +14,13 @@ class CWaypointList
     ~CWaypointList();
     void print();
     void update( CPose2d myPose );
-    CWaypoint2d * findWaypoint( std::string name);
-    void setCurrentWaypoint( std::string name );
+    //CWaypoint2d * findWaypoint( std::string name);
+    //void setCurrentWaypoint( std::string name );
     CWaypoint2d getWaypoint();
     //CWaypoint2d * getNextWaypoint();
   private:
     std::list<CWaypoint2d> mWaypoints;
-    CWaypoint2d * mCurrentWaypoint;
+    CWaypoint2d mCurrentWaypoint;
 };
 
 

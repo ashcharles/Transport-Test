@@ -32,7 +32,7 @@ extern "C" int Init ( Stg::Model * mod )
   CChatterboxCtrl* robotCtrl = NULL;
 
   // init general stuff
-  ErrorInit ( 8, false );
+  ErrorInit ( 4, false );
   initRandomNumberGenerator();
 
   // create robot and its controller
