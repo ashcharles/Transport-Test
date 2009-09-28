@@ -7,7 +7,7 @@ CWaypointList::CWaypointList( std::string filename )
 {
   FILE * file = fopen( filename.c_str(), "r" );
   if( file == NULL ) {
-    fprintf( stderr, "Waypoint: Can't open filen");
+    fprintf( stderr, "Waypoint: Can't open file\n");
     exit( EXIT_FAILURE );
   }
 
