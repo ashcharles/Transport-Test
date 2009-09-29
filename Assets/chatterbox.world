@@ -32,25 +32,25 @@ floorplan
   name "cave"
   size [10.75 7.00 0.600]
   pose [5.375 3.5 0 0]
-  bitmap "lab.png"
+  bitmap "lab_obstacles.png"
 )
 
-# Goal zone 
-zone
-(
-  color "green"
-  pose [ 8.00 3.50 0 0 ]
-  name "source"
-  ctrl "source"
-)
-
-# Home zone
+# Home zone 
 zone
 (
   color "red"
-  pose [ 2.000 3.50 0 0 ]
+  pose [ 10.32 6.55 0 0 ]
   name "sink"
   ctrl "sink"
+)
+
+# Goal zone
+zone
+(
+  color "green"
+  pose [ 0.450 6.55 0 0 ]
+  name "source"
+  ctrl "source"
 )
 
 # Charging zone marking tape
@@ -130,4 +130,4 @@ charge_station(  pose [ 9.35  0.06 0.0 -90.0 ] )
 charge_station(  pose [ 9.85  0.06 0.0 -90.0 ] )
 charge_station(  pose [10.35  0.06 0.0 -90.0 ] )
 
-autorob ( pose [3.00   4.00 0 0]  joules 100000 )
+autorob ( pose [9.0 6.4 0 0]  joules 100000 )

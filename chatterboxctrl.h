@@ -26,7 +26,7 @@
 #include <poll.h>
 #include <list>
 #include <string>
-#include <RapiStage>
+#include <RapiLooseStage>
 #include "nd.h"
 #include "waypoint.h"
 

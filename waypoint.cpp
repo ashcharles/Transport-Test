@@ -100,6 +100,24 @@ CWaypoint2d CWaypointList::getWaypoint()
   CWaypoint2d currentWaypoint = mCurrentWaypoint;
   return currentWaypoint;
 }
+//------------------------------------------------------------------------------
+void CWaypointList::populateStageWaypoints(
+  std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints )
+{
+  std::list<CWaypoint2d>::iterator it;
+  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
+    CPose2d pose = it->getPose();
+    Stg::ModelPosition::Waypoint * stgWaypoint = new
+      Stg::ModelPosition::Waypoint();
+    stgWaypoint->pose.x = pose.mX;
+    stgWaypoint->pose.y = pose.mY;
+    stgWaypoint->pose.a = pose.mYaw;
+    stgWaypoint->color = Stg::Color( 0, 1, 0 ); // green
+    printf("Added waypoint ");
+    pose.print();
+    stgWaypoints.push_back( *stgWaypoint );
+  }
+}
 //----------------------------------------------------------------------------
 //int main( int argc, char * argv[] )
 //{

@@ -60,14 +60,16 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
 
   // Setup navigation
   mObstacleAvoider = new CNd( 0.5, 0.5, 0.5 );
-  mObstacleAvoider->addRangeFinder( mIr );
   assert( mObstacleAvoider );
+  mObstacleAvoider->addRangeFinder( mIr );
+  mObstacleAvoider->setEpsilonDistance( 0.1 );
+  mObstacleAvoider->setEpsilonAngle( 10.0 );
   mOdo = mDrivetrain->getOdometry();
   mPreviousPose = mOdo->getPose();
   mPath = new CWaypointList( "waypoints.txt" );
-  if ( mPath == NULL )
-    printf( "Panic...waypoint failed\n" );
-  mPath->print();
+  assert( mPath );
+  mPath->populateStageWaypoints(
+    ((CLooseStageDrivetrain2dof *) mDrivetrain)->getStageModel()->waypoints );
 
   // set up timers (in seconds)
   mElapsedStateTime = 0.0;
@@ -132,7 +134,6 @@ tActionResult CChatterboxCtrl::actionWork()
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionLoad()
 {
-  //TODO
   static CRgbColor color( 0, 0, 0 );
   static int loadCount = 0;
 
@@ -160,7 +161,6 @@ tActionResult CChatterboxCtrl::actionLoad()
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionDump()
 {
-  //TODO
   static CRgbColor color( 0, 110, 0 );
   static int loadCount = 0;
 
@@ -187,7 +187,6 @@ tActionResult CChatterboxCtrl::actionDump()
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionPause()
 {
-  //TODO
   mDrivetrain->stop();
   return IN_PROGRESS;
 }

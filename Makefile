@@ -3,7 +3,7 @@ all:
 	mkdir -p Build
 	cd Build && cmake -DCMAKE_BUILD_TYPE=Debug ..
 	cd Build && make
-	cd Build && ln -s ../waypoints.txt .
+	cd Build && ln -sf ../waypoints.txt .
 
 docs:
 	doxygen Doxyfile
