@@ -59,7 +59,7 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   mDrivetrain->setRotationalAccelerationLimit( CLimit( -INFINITY, INFINITY ) );
 
   // Setup navigation
-  mObstacleAvoider = new CNd( 0.5, 0.5, 0.5 );
+  mObstacleAvoider = new CNd( 0.5, 0.5, 0.5, mName, 12 );
   assert( mObstacleAvoider );
   mObstacleAvoider->addRangeFinder( mIr );
   mObstacleAvoider->setEpsilonDistance( 0.1 );
@@ -69,7 +69,8 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   mPath = new CWaypointList( "waypoints.txt" );
   assert( mPath );
   mPath->populateStageWaypoints(
-    ((CLooseStageDrivetrain2dof *) mDrivetrain)->getStageModel()->waypoints );
+    ((CLooseStageDrivetrain2dof *) mDrivetrain)->getStageModel()->waypoints,
+    mPreviousPose );
 
   // set up timers (in seconds)
   mElapsedStateTime = 0.0;

@@ -1,17 +1,49 @@
-#include <stdlib.h>
-#include <stdio.h>
+
+
+
+
 #include "waypoint.h"
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CWaypointList::CWaypointList()
+{
+  mFgAtWaypoint = false;
+}
+//------------------------------------------------------------------------------
 CWaypointList::CWaypointList( std::string filename )
+{
+  mFgAtWaypoint = false;
+  if( loadPoints( filename ) ) {
+    mCurrentWaypoint = mWaypoints.begin();
+  }
+}
+//------------------------------------------------------------------------------
+CWaypointList::~CWaypointList()
+{
+}
+//------------------------------------------------------------------------------
+void CWaypointList::print()
+{
+  if( mWaypoints.empty() ) {
+    printf( "Waypoint list is empty\n" );
+    return;
+  }
+
+  std::list<CWaypoint2d>::iterator it;
+  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
+    it->print();
+  }
+}
+//----------------------------------------------------------------------------
+bool CWaypointList::loadPoints( std::string filename )
 {
   FILE * file = fopen( filename.c_str(), "r" );
   if( file == NULL ) {
     fprintf( stderr, "Waypoint: Can't open file\n");
-    exit( EXIT_FAILURE );
+    return false;
   }
 
-  // parse file
+  // parse file and add new waypoints onto end of waypoint list
   while( !feof( file ) ) {
     float x, y, yaw;
     char name [80];
@@ -28,107 +60,53 @@ CWaypointList::CWaypointList( std::string filename )
       waypoint.setLabel( name );
     mWaypoints.push_back( waypoint );
   }
-
-  mCurrentWaypoint = mWaypoints.front();
-
   fclose( file );
+  return true;
 }
-//----------------------------------------------------------------------------
-CWaypointList::~CWaypointList()
+//------------------------------------------------------------------------------
+bool CWaypointList::update( CPose2d myPose )
 {
-}
-//----------------------------------------------------------------------------
-void CWaypointList::print()
-{
-  std::list<CWaypoint2d>::iterator it;
   if( mWaypoints.empty() ) {
     printf( "Waypoint list is empty\n" );
-    return;
+    return false;
   }
-
-  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
-    it->print();
-  }
-}
-//----------------------------------------------------------------------------
-void CWaypointList::update( CPose2d myPose )
-{
-  std::list<CWaypoint2d>::iterator it;
-  if( mWaypoints.empty() ) {
-    printf( "Waypoint list is empty\n" );
-    return;
-  }
-
-  // find closest waypoint
-  CWaypoint2d closestWaypoint;
-  double distToNearestWaypoint = INFINITY;
-  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
-    double distToWaypoint = myPose.distance( it->getPose() );
-    if( distToWaypoint < distToNearestWaypoint ) {
-      distToNearestWaypoint = distToWaypoint;
-      closestWaypoint = *it;
+  if( atWaypoint( myPose ) ) {
+    std::string blah = getWaypoint().getLabel(); //TODO: fix kludge
+    if( blah != "l" ) {
+      this->print();
+      mCurrentWaypoint++;
+    }
+    else {
+      mCurrentWaypoint = mWaypoints.begin();
     }
   }
-
-  // if we are at the waypoint, kick it off the list and move on
-  if( (distToNearestWaypoint < 1.0) && (mWaypoints.size() > 1) ) {
-    mWaypoints.pop_front();
-    closestWaypoint = mWaypoints.front();
-    printf( "I moved to the next waypoint:\n" );
-    closestWaypoint.getPose().print();
-  }
-  mCurrentWaypoint = closestWaypoint;
+  return true;
 }
-//----------------------------------------------------------------------------
-//CWaypoint2d * CWaypointList::findWaypoint( std::string name)
-//{
-//  std::list<CWaypoint2d>::iterator it;
-//  for( it = mWaypoints.begin(); it != mWaypoints.end(); it++ ) {
-//    if( name == it->getLabel() )
-//      return &(*it);
-//  }
-//  return NULL;
-//}
-////----------------------------------------------------------------------------
-//void CWaypointList::setCurrentWaypoint( std::string name )
-//{
-//  mCurrentWaypoint = findWaypoint( name );
-//}
-////----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+bool CWaypointList::atWaypoint( CPose2d pose )
+{
+  if( pose.distance( getWaypoint().getPose() ) < 0.4 )
+    return true;
+  return false;
+}
+//------------------------------------------------------------------------------
 CWaypoint2d CWaypointList::getWaypoint()
 {
-  CWaypoint2d currentWaypoint = mCurrentWaypoint;
-  return currentWaypoint;
+  return *mCurrentWaypoint;
 }
 //------------------------------------------------------------------------------
 void CWaypointList::populateStageWaypoints(
-  std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints )
+  std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints,
+  CPose2d poseOffset )
 {
   std::list<CWaypoint2d>::iterator it;
   for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
-    CPose2d pose = it->getPose();
-    Stg::ModelPosition::Waypoint * stgWaypoint = new
-      Stg::ModelPosition::Waypoint();
-    stgWaypoint->pose.x = pose.mX;
-    stgWaypoint->pose.y = pose.mY;
-    stgWaypoint->pose.a = pose.mYaw;
-    stgWaypoint->color = Stg::Color( 0, 1, 0 ); // green
-    printf("Added waypoint ");
-    pose.print();
-    stgWaypoints.push_back( *stgWaypoint );
+    CPose2d pose = it->getPose() - poseOffset;
+    Stg::ModelPosition::Waypoint stgWaypoint = Stg::ModelPosition::Waypoint();
+    stgWaypoint.pose.x = pose.mX;
+    stgWaypoint.pose.y = pose.mY;
+    stgWaypoint.pose.a = pose.mYaw;
+    stgWaypoint.color = Stg::Color( 0, 0, 1 ); // green
+    stgWaypoints.push_back( stgWaypoint );
   }
 }
-//----------------------------------------------------------------------------
-//int main( int argc, char * argv[] )
-//{
-//  if( argc < 2 ) {
-//    fprintf( stderr, "First argument should be filename\n" );
-//    exit( EXIT_FAILURE );
-//  }
-//  std::string filename( argv[1] );
-//  WaypointList waylist( filename );
-//  waylist.print();
-//  CWaypoint2d find = waylist.findWaypoint( "" );
-//  find.print();
-//}
-//----------------------------------------------------------------------------
