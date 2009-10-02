@@ -26,6 +26,7 @@
 #include <poll.h>
 #include <list>
 #include <string>
+#include "robotrpcserver.h"
 #include <RapiLooseStage>
 #include "nd.h"
 #include "waypoint.h"
@@ -116,6 +117,9 @@ class CChatterboxCtrl : public ARobotCtrl
     CNd * mObstacleAvoider;
     /** Waypoint path */
     CWaypointList * mPath;
+    /** RPC Server */
+    RobotRpcServer mServer;
+
     //------------- variables ------------//
     /** Robot name */
     std::string mName;

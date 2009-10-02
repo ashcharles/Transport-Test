@@ -16,6 +16,7 @@ ELSE( QT_FOUND )
   MESSAGE( ERROR "Need QT libraries!" )
 ENDIF( QT_FOUND )
 
+FIND_PACKAGE( Boost )
 
 INCLUDE_DIRECTORIES(
   ${RAPI_INCLUDE_DIRS}
@@ -23,6 +24,7 @@ INCLUDE_DIRECTORIES(
   ${ND_INCLUDE_DIRS}
   ${RAPIGUI_INCLUDE_DIRS}
   ${QT_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIRS}
 )
 
 LINK_DIRECTORIES(
@@ -39,6 +41,7 @@ ADD_LIBRARY( chatterbox MODULE
   chatterbox.cpp
   chatterboxctrl.cpp
   waypoint.cpp
+  robotrpcserver.cpp
 )
 
 TARGET_LINK_LIBRARIES( chatterbox

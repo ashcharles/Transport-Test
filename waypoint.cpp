@@ -1,7 +1,3 @@
-
-
-
-
 #include "waypoint.h"
 
 //------------------------------------------------------------------------------
@@ -71,9 +67,9 @@ bool CWaypointList::update( CPose2d myPose )
     return false;
   }
   if( atWaypoint( myPose ) ) {
-    std::string blah = getWaypoint().getLabel(); //TODO: fix kludge
-    if( blah != "l" ) {
-      this->print();
+    std::list<CWaypoint2d>::iterator lastElement( mWaypoints.end() );
+    lastElement--; // this is kludgy but works
+    if( mCurrentWaypoint != lastElement-- ) {
       mCurrentWaypoint++;
     }
     else {

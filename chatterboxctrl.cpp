@@ -32,9 +32,10 @@ const float MAX_CHARGING_TIME = 600.0;
 const std::string StateNames[] = {"Start", "Work", "Load", "Dump",
                                   "Pause", "Quit"
                                  };
+const int PORT = 12345;
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
-    : ARobotCtrl( robot )
+    : ARobotCtrl( robot ), mServer( mRobot, PORT )
 {
   printf( "\n" );
   PRT_STATUS( "\nStage Example of Chatterbox: Follow Waypoints\n" );
@@ -204,6 +205,7 @@ void CChatterboxCtrl::updateData( float dt )
   mRobotPose = mOdo->getPose() - mPreviousPose; // differential pose
   mPreviousPose = mOdo->getPose();
   mDataLogger->write( mAccumulatedRunTime );
+  mServer.update();
   mObstacleAvoider->update( mAccumulatedRunTime,
                             mDrivetrain->getOdometry()->getPose(),
                             mDrivetrain->getVelocity() );
