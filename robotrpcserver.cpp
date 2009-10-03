@@ -32,6 +32,10 @@ void RobotRpcServer::getRanges( jsonrpc::variant params,
                                 const std::string& ip,
                                 int port )
 {
-  results[ "range" ] = jsonrpc::toVariant( 42 );
+  std::cout << "RobotRpcServer::getRanges()" << std::endl;
+  //std::vector<float> data;
+  //for( unsigned int i = 0; i < mRangeFinder->getNumSamples(); ++i )
+//    data.push_back( mRangeFinder->mRangeData[i].range );
+  results[ "range" ] = jsonrpc::toVariant( 12 );
 }
 //------------------------------------------------------------------------------
