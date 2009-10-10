@@ -84,6 +84,7 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
   mDataLogger->addVar( &mRobotPose, "Pose" );
   mDataLogger->addVar( &mVoltageLpf, "Filtered Voltage" );
   mDataLogger->addVar( &mStateName, "State name" );
+  mServer.update();
 }
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::~CChatterboxCtrl()

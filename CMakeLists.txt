@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
+PROJECT( RAPI_STAGE )
 OPTION (WITH_GUI "Enable building of Rapi GUI" ON )
 
 INCLUDE(FindPkgConfig)

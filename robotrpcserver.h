@@ -18,7 +18,10 @@ class RobotRpcServer
                     jsonrpc::object& results,
                     const std::string& ip,
                     int port );
-
+    void getRangeFinder( jsonrpc::variant params,
+                         jsonrpc::object& results,
+                         const std::string& ip,
+                         int port );
   private:
     jsonrpc::TCPServer mServer;
     ARobot * mRobot;
