@@ -51,7 +51,7 @@ void RobotRpcServer::update()
   while ( mServer.recv() );
 }
 //------------------------------------------------------------------------------
-variant packVelocity ( Rapi::CVelocity2d velocity )
+variant RobotRpcServer::packVelocity ( Rapi::CVelocity2d velocity )
 {
   object velocityObj;
   velocityObj[ "xDot" ] = toVariant<double> ( velocity.mXDot );
@@ -60,7 +60,7 @@ variant packVelocity ( Rapi::CVelocity2d velocity )
   return toVariant ( velocityObj );
 }
 //------------------------------------------------------------------------------
-variant packPose ( Rapi::CPose2d pose )
+variant RobotRpcServer::packPose ( Rapi::CPose2d pose )
 {
   object poseObj;
   poseObj[ "x" ] = toVariant<double> ( pose.mX );
