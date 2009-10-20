@@ -14,7 +14,7 @@ class RobotRpcServer
     RobotRpcServer ( Rapi::ARobot * robot, int port );
     /** default destructor */
     ~RobotRpcServer();
-    /** listen for incoming requests (non-blocking) */
+    /** listen for incoming requests */
     void update ( void );
     //---- device configuration calls --------------------------------------------
     /** sends the current drivetrain configuration */
@@ -22,12 +22,8 @@ class RobotRpcServer
                             jsonrpc::object& results,
                             const std::string& ip,
                             int port );
-//     void getOdometryDev( jsonrpc::variant params,
-//                          jsonrpc::object& results,
-//                          const std::string& ip,
-//                          int port );
     /** send the current powerpack configuration */
-    void getPowerpackDev ( jsonrpc::variant params,
+    void getPowerPackDev ( jsonrpc::variant params,
                            jsonrpc::object& results,
                            const std::string& ip,
                            int port );
@@ -43,7 +39,7 @@ class RobotRpcServer
                          const std::string& ip,
                          int port );
     /** send voltage and power information */
-    void getPowerpack ( jsonrpc::variant params,
+    void getPowerPack ( jsonrpc::variant params,
                         jsonrpc::object& results,
                         const std::string& ip,
                         int port );

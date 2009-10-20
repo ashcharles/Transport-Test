@@ -4,7 +4,7 @@ using namespace jsonrpc;
 
 //------------------------------------------------------------------------------
 RobotRpcServer::RobotRpcServer ( Rapi::ARobot * robot, int port )
-  : mServer ( port )
+    : mServer ( port )
 {
   // try to get some basic devices
   mRobot = robot;
@@ -25,11 +25,11 @@ RobotRpcServer::RobotRpcServer ( Rapi::ARobot * robot, int port )
   if ( mPowerPack )
   {
     mServer.addMethodHandler ( new Server::RPCMethod< RobotRpcServer >
-                               ( this, &RobotRpcServer::getPowerpackDev ),
-                               "getPowerpackDev" );
+                               ( this, &RobotRpcServer::getPowerPackDev ),
+                               "getPowerPackDev" );
     mServer.addMethodHandler ( new Server::RPCMethod< RobotRpcServer >
-                               ( this, &RobotRpcServer::getPowerpack ),
-                               "getPowerpack" );
+                               ( this, &RobotRpcServer::getPowerPack ),
+                               "getPowerPack" );
   }
   if ( mRangeFinder )
   {
@@ -77,12 +77,14 @@ void RobotRpcServer::getDrivetrainDev ( variant params,
   std::cout << "this method isn't needed" << std::endl;
 }
 //------------------------------------------------------------------------------
-void RobotRpcServer::getPowerpackDev ( variant params,
+void RobotRpcServer::getPowerPackDev ( variant params,
                                        object& results,
                                        const std::string& ip,
                                        int port )
 {
-  std::cout << "this method isn't needed" << std::endl;
+  double cap = ( mPowerPack->getMaxBatteryCapacity() == INFINITY ) ? 0.0 : 
+                 mPowerPack->getMaxBatteryCapacity();
+  results[ "maxBatteryCapacity" ] = toVariant<double>( cap );
 }
 //------------------------------------------------------------------------------
 void RobotRpcServer::getRangeFinderDev ( variant params,
@@ -95,13 +97,12 @@ void RobotRpcServer::getRangeFinderDev ( variant params,
                     mRangeFinder->getMinRange();
   results[ "minRange" ] = toVariant<double> ( minRange );
   results[ "maxRange" ] = toVariant<double> ( mRangeFinder->getMaxRange() );
-  results[ "beamConeAngle" ] = toVariant<double> ( mRangeFinder->getBeamConeAngle() );
+  results[ "beamConeAngle" ] = toVariant<double>
+                                ( mRangeFinder->getBeamConeAngle() );
 
   array beamPose;
   for ( unsigned int i = 0; i < mRangeFinder->getNumSamples(); ++i )
-  {
     beamPose.push_back ( packPose ( mRangeFinder->mRelativeBeamPose[i] ) );
-  }
   results[ "beamPose" ] = toVariant<array> ( beamPose );
 }
 //------------------------------------------------------------------------------
@@ -117,14 +118,24 @@ void RobotRpcServer::getDrivetrain ( variant params,
   results[ "odometry" ] = packPose ( mDrivetrain->getOdometry()->getPose() );
 }
 //------------------------------------------------------------------------------
-void RobotRpcServer::getPowerpack ( variant params,
+void RobotRpcServer::getPowerPack ( variant params,
                                     object& results,
                                     const std::string& ip,
                                     int port )
 {
+  results[ "batteryCapacity" ] = toVariant<double>
+                                   ( mPowerPack->getBatteryCapacity() );
+  results[ "current" ] = toVariant<double> ( mPowerPack->getCurrent() );
   results[ "voltage" ] = toVariant<double> ( mPowerPack->getVoltage() );
-  results[ "remainingEnergy" ] = toVariant<double> ( mPowerPack->getBatteryLevel() );
-  results[ "isCharging" ] = toVariant<bool> ( mPowerPack->isCharging() );
+  results[ "batteryTemperature" ] = toVariant<double>
+                                      ( mPowerPack->getBatteryTemperature() );
+  results[ "batteryLevel" ] = toVariant<double>
+                                  ( mPowerPack->getBatteryLevel() );
+  results[ "totalEnergyDissipated" ] = toVariant<double>
+                                     ( mPowerPack->getTotalEnergyDissipated() );
+  results[ "chargeState" ] = toVariant<int>
+                                ( (int) mPowerPack->getChargingState() );
+  results[ "chargeSource" ] = toVariant<int>( mPowerPack->getChargingSource() );
 }
 //------------------------------------------------------------------------------
 void RobotRpcServer::getRanges ( variant params,
