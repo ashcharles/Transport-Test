@@ -21,7 +21,7 @@
 #ifndef CHATTERBOXCTRL_H
 #define CHATTERBOXCTRL_H
 
-//#define CHATTERBOX // defined if running on chatterbox
+#define CHATTERBOX // defined if running on chatterbox
 
 #include <stdio.h>
 #include <unistd.h>
