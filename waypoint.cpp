@@ -4,6 +4,7 @@
 CWaypointList::CWaypointList()
 {
   mFgAtWaypoint = false;
+  mFgAtEnd = false;
 }
 //------------------------------------------------------------------------------
 CWaypointList::CWaypointList( std::string filename )
@@ -57,6 +58,8 @@ bool CWaypointList::loadPoints( std::string filename )
     mWaypoints.push_back( waypoint );
   }
   fclose( file );
+  mFgAtEnd = false;
+  
   return true;
 }
 //------------------------------------------------------------------------------
@@ -68,12 +71,12 @@ bool CWaypointList::update( CPose2d myPose )
   }
   if( atWaypoint( myPose ) ) {
     std::list<CWaypoint2d>::iterator lastElement( mWaypoints.end() );
-    lastElement--; // this is kludgy but works
-    if( mCurrentWaypoint != lastElement-- ) {
-      mCurrentWaypoint++;
+    --lastElement; // this is kludgy but end() points after the last element
+    if( mCurrentWaypoint != lastElement ) {
+      ++mCurrentWaypoint;
     }
     else {
-      mCurrentWaypoint = mWaypoints.begin();
+      mFgAtEnd = true;
     }
   }
   return true;
@@ -81,7 +84,7 @@ bool CWaypointList::update( CPose2d myPose )
 //------------------------------------------------------------------------------
 bool CWaypointList::atWaypoint( CPose2d pose )
 {
-  if( pose.distance( getWaypoint().getPose() ) < 0.4 )
+  if( pose.distance( getWaypoint().getPose() ) < 0.3 )
     return true;
   return false;
 }

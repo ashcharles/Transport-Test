@@ -14,28 +14,20 @@ define charge_station model
 	pose [-0.070 0 -0.1 0]
 	obstacle_return 0
   )
-  # IR beam blocker
-#  model(
-#	color "gray30"
-#    size [ 0.005 0.014 0.010]
-#    pose [-0.020 0.000 -0.015]
-#  )
   # IR beacons: Red=Port=Left; Right=Starboard=Green; Purple=Omni
   model(
 	color "red"
 	size [0.010 0.010 0.010]
 	pose [-0.016 0.010 -0.015 -10 ]
-#	fiducial_return 4
 	)
   model(
 	color "green"
 	size [0.010 0.010 0.010]
 	pose [-0.016 -0.010 -0.015 10 ]
-#	fiducial_return 5
 	)
   model(
 	color "purple"
-	size [0.010 0.010 0.010]
+	size [0.030 0.030 0.030]
     pose [-0.020 0.000 -0.015 0.000]
     fiducial_return 6
     )

@@ -1,6 +1,7 @@
 
 define roomba position
 (
+  localization "odom"
   size [0.33 0.33 0.1]
 
   # this block approximates the circular shape of a Roomba

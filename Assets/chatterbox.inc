@@ -5,7 +5,7 @@
 
 include "irobot.inc"
 # optionally include a laser
-#include "sick.inc"
+include "sick.inc"
 
 define chatterbox create
 (
@@ -16,6 +16,7 @@ define chatterbox create
   # Baseboard draws maybe 200mA @ 5V => 1W
   # Tri colour LEDs: 5 LEDs at 20mA @ 2.0V => 2W
   watts 35
+  odom_error [ 0.01 0.01 0.00 0.13 ]
 
   # charging connection
   model
@@ -58,8 +59,8 @@ define chatterbox create
     pose [0.040 0.000 -0.005 0.000]
     range_min 0.0
     range_max 2.5
-    range_max_id 2.5
-    fov 60
+    range_max 2.5
+    fov 60 
   )
   # optionally include a laser
   #sicklaser()

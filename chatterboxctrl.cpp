@@ -20,172 +20,177 @@
  **************************************************************************/
 #include "chatterboxctrl.h"
 
-/** Time constant for voltage low pass filter [s] */
-const float TAU_VOLTAGE_LPF = 5.0;
-/** Battery voltage threshold to trigger charging [V] */
-const float LOW_ENERGY_VOLTAGE_THRESHOLD = 14.5;
-/** Battery voltage threshold of a 'full' battery [V] */
-const float FULLY_CHARGED_VOLTAGE_THRESHOLD = 16.75;
-/** Maximum allowable charging time [s] */
-const float MAX_CHARGING_TIME = 600.0;
+/** Number of flags to transport */
+const int NUM_FLAGS = 10;
+
 /** Array of State names for logging */
-const std::string StateNames[] = {"Start", "Work", "Load", "Dump",
-                                  "Pause", "Quit"
-                                 };
-const int PORT = 12345;
+const std::string StateNames[] = { "Start", "Work", "Search", "Load",
+                                   "Dump", "Pause", "Quit" };
+
 //-----------------------------------------------------------------------------
-CChatterboxCtrl::CChatterboxCtrl( ARobot* robot )
-    : ARobotCtrl( robot ), mServer( mRobot, PORT )
+/** Utility function to transform coordinate systems */
+void transform( double angle, double x0, double y0, double yaw0, double &x1,
+                double &y1, double &yaw1 )
 {
-  printf( "\n" );
-  PRT_STATUS( "\nStage Example of Chatterbox: Follow Waypoints\n" );
-
-  // get robot devices
-  mRobot->findDevice( mDrivetrain, "drivetrain:0" );
-  mRobot->findDevice( mPowerPack, "powerpack:0" );
-  mRobot->findDevice( mIr, "ranger:0" );
-  mRobot->findDevice( mTextDisplay, "textdisplay:0" );
-  mRobot->findDevice( mFrontFiducial, "fiducial:0" );
-
+  x1 = cos( angle ) * x0 + sin( angle ) * y0;
+  y1 = -sin( angle ) * x0 + cos( angle ) * y0;
+  yaw1 = yaw0;
+}
+//-----------------------------------------------------------------------------
+CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
+{
   // Initialize robot
   char hostname[20];
-  if ( gethostname( hostname, 20 ) != 0 ) { exit( EXIT_FAILURE ); }
+  gethostname( hostname, 20 );
   std::string name( hostname );
-  mName = name.substr( 0, name.find( "autolab" ) );
+  mName = name.substr( 0, name.find( "." ) ); // e.g. 'walle.autolab'
   mState = START;
   mStateName = StateNames[mState];
   mIsLoaded = false;
-  mVoltageLpf = mPowerPack->getVoltage();
-  mDrivetrain->setTranslationalAccelerationLimit( CLimit( -INFINITY, 0.3 ) );
-  mDrivetrain->setRotationalAccelerationLimit( CLimit( -INFINITY, INFINITY ) );
-
-  // Setup navigation
-  mObstacleAvoider = new CNd( 0.5, 0.5, 0.5, mName, 12 );
-  assert( mObstacleAvoider );
-  mObstacleAvoider->addRangeFinder( mIr );
-  mObstacleAvoider->setEpsilonDistance( 0.1 );
-  mObstacleAvoider->setEpsilonAngle( 10.0 );
-  mOdo = mDrivetrain->getOdometry();
-  mPreviousPose = mOdo->getPose();
-  mPath = new CWaypointList( "waypoints.txt" );
-  assert( mPath );
-  mPath->populateStageWaypoints(
-    ((CLooseStageDrivetrain2dof *) mDrivetrain)->getStageModel()->waypoints,
-    mPreviousPose );
-
-  // set up timers (in seconds)
+  mFlags = 0;
   mElapsedStateTime = 0.0;
   mAccumulatedRunTime = 0.0;
 
-  // Setup logging & rpc server
+  // get robot devices
+#ifndef CHATTERBOX 
+  PRT_STATUS( "Running simulation in Stage" );
+  mRobot->findDevice( mDrivetrain, "drivetrain:0" );
+  mRobot->findDevice( mLaser, "laser:0" );
+  mRobot->findDevice( mFiducialDetector, "fiducial:0" );
+  mRobot->findDevice( mIr, "ranger:0" );
+#else
+  PRT_STATUS( "Running on chatterbox" );
+  mRobot->findDevice( mDrivetrain, "CB:drivetrain" );
+  mRobot->findDevice( mLaser, "CB:laser" );
+  mRobot->findDevice( mFiducialDetector, "CB:front_fiducial" );
+  mRobot->findDevice( mIr, "CB:ir" );
+#endif
+  mRangeFinder = mIr;
+  if( mLaser ) {
+    PRT_STATUS( "Using a laser device" );
+    mRangeFinder = mLaser;
+  }
+
+  // Setup navigation
+  mPath = new CWaypointList( "source2sink.txt" );
+  mObstacleAvoider = new CNd( 0.3, 0.3, 0.3, mName,
+                              30 * mRangeFinder->getNumSamples() );
+  mObstacleAvoider->setEpsilonDistance( 0.3 );
+  mObstacleAvoider->setEpsilonAngle( M_PI );
+  mObstacleAvoider->addRangeFinder( mRangeFinder );
+  mOdo = mDrivetrain->getOdometry();
+  mAngle = mOdo->getPose().mYaw;
+  mOdo->setToZero(); // reset local odometry
+
+  // Setup logging 
   char filename[40];
   sprintf( filename, "logfile_%s.log", mName.c_str() );
   mDataLogger = CDataLogger::getInstance( filename , OVERWRITE, "#" );
-  mDataLogger->addVar( &mRobotPose, "Pose" );
-  mDataLogger->addVar( &mVoltageLpf, "Filtered Voltage" );
   mDataLogger->addVar( &mStateName, "State name" );
-  mServer.update();
 }
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::~CChatterboxCtrl()
 {
-  if ( mPath ) {
-    delete mPath;
-  }
-
-  if ( mObstacleAvoider ) {
+  mDrivetrain->stop();
+  if ( mObstacleAvoider )
     delete mObstacleAvoider;
-  }
-}
-//-----------------------------------------------------------------------------
-bool CChatterboxCtrl::isChargingRequired()
-{
-  if ( mVoltageLpf < LOW_ENERGY_VOLTAGE_THRESHOLD ) {
-    return true;
-  }
-  return false;
+  if( mPath )
+    delete mPath;
 }
 //-----------------------------------------------------------------------------
 bool CChatterboxCtrl::isAtCargoBay()
 {
-  //TODO
-  if ( false ) {
-    return true;
-  }
-  return false;
+  return isChargerDetected();
 }
 //-----------------------------------------------------------------------------
 bool CChatterboxCtrl::isChargerDetected()
 {
   unsigned char ir;
-  ir = mFrontFiducial->mFiducialData[0].id;
+  if( mFiducialDetector->getNumReadings() == 0 )
+    return false;
+  ir = mFiducialDetector->mFiducialData[0].id;
 
+#ifndef CHATTERBOX
+  if( ir == 6 ) {
+#else
+  if( (ir == CB_RED_BUOY) ||
+      (ir == CB_GREEN_BUOY) ||
+      (ir == CB_FORCE_FIELD) ||
+      (ir == CB_RED_GREEN_BUOY) ||
+      (ir == CB_RED_BUOY_FORCE_FIELD) ||
+      (ir == CB_GREEN_BUOY_FORCE_FIELD) ||
+      (ir == CB_RED_GREEN_BUOY_FORCE_FIELD) ) {
+#endif
+    PRT_STATUS( "See charger" );
+    return true;
+  }
   return false;
 }
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionWork()
 {
-//  CPose2d goal = CPose2d( mRobotPose.mX + 1.0, mRobotPose.mY,
-//                          mRobotPose.mYaw + D2R(-10.0) ); // right wall follow
-  mPath->update( mOdo->getPose() ); //TODO: this should be relative pose
-  CWaypoint2d goal = mPath->getWaypoint();
-
-  mObstacleAvoider->setGoal( goal.getPose() );
+  mPath->update( mCurrentPose );
+  mObstacleAvoider->setGoal( mPath->getWaypoint().getPose() );
   mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
-  return IN_PROGRESS;
+  return ( mPath->mFgAtEnd ? COMPLETED : IN_PROGRESS );
+}
+//-----------------------------------------------------------------------------
+tActionResult CChatterboxCtrl::actionSearch()
+{
+  double turnTime = 10.0; // turn on the spot [s]
+  double goalTime = 2.0; // try to reach new goal [s]
+
+  double modTime = 0.1 * floor( 10 * fmod( mElapsedStateTime,
+                                turnTime + goalTime ) );
+  if( mIsStateChanged || (modTime == 0.0 ) ) {
+    mDrivetrain->stop();
+    mDrivetrain->setRotationalVelocityCmd( -2.0 * M_PI / turnTime );
+  }
+  else if( modTime == turnTime ) {
+    CPose2d goal( (float(rand()) / RAND_MAX ), (float(rand()) / RAND_MAX ), 0.0 );
+    mObstacleAvoider->setGoal( goal + mCurrentPose );
+  }
+  else if( modTime > turnTime ) {
+    mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
+  }
+
+  return ( isAtCargoBay() ? COMPLETED : IN_PROGRESS );
 }
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionLoad()
 {
-  static CRgbColor color( 0, 0, 0 );
-  static int loadCount = 0;
-
-  unsigned char rate = 10;
+  const double turnAngle = 0.5 * M_PI; // [rad]
+  const double turnTime = 10.0; // [s]
 
   if ( mIsStateChanged ) {
     mDrivetrain->stop();
-    mOdo->setToZero();
+    mDrivetrain->setRotationalVelocityCmd( -turnAngle/turnTime );
   }
 
-  color.mGreen = ( color.mGreen < 110 ) ? color.mGreen + rate : 255;
-  // We've filled an LED
-  if ( color.mGreen >= 255 ) {
-    loadCount = ( loadCount + 1 ) % 5;
-    color = CRgbColor( 0, 0, 0 );
-    // We're done
-    if ( loadCount == 0 ) {
-      PRT_STATUS( "Loading Complete!\n" );
-      mIsLoaded = true;
-      return COMPLETED;
+  if( mElapsedStateTime > turnTime ) {
+    mOdo->setToZero();
+    delete( mPath );
+    if( mIsLoaded ) {
+      PRT_MSG1( 0, "%d flags transported", ++mFlags );
+      mIsLoaded = false;
+      mAngle = 0.75 * M_PI;
+      mPath = new CWaypointList( "source2sink.txt" );
     }
+    else {
+      PRT_STATUS( "Loading complete!" );
+      mIsLoaded = true;
+      mAngle = -0.25 * M_PI;
+      mPath = new CWaypointList( "sink2source.txt" );
+    }
+    return COMPLETED;
   }
+
   return IN_PROGRESS;
 }
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionDump()
 {
-  static CRgbColor color( 0, 110, 0 );
-  static int loadCount = 0;
-
-  unsigned char rate = 10;
-
-  if ( mIsStateChanged )
-    mDrivetrain->stop();
-
-  color.mGreen = ( color.mGreen > rate ) ? color.mGreen - rate : 0;
-  // We've filled an LED
-  if ( color.mGreen <= 0 ) {
-    printf( "Next!\n" );
-    loadCount = ( loadCount + 1 ) % 5;
-    color = CRgbColor( 0, 110, 0 );
-    // We're done
-    if ( loadCount == 0 ) {
-      PRT_STATUS( "Unloading complete!\n" );
-      mIsLoaded = false;
-      return COMPLETED;
-    }
-  }
-  return IN_PROGRESS;
+  return actionLoad();
 }
 //-----------------------------------------------------------------------------
 tActionResult CChatterboxCtrl::actionPause()
@@ -199,60 +204,58 @@ void CChatterboxCtrl::updateData( float dt )
   static tState prevTimestepState = mState;
 
   // household chores
+  CPose2d pos = mOdo->getPose();
+  transform( mAngle, pos.mX, pos.mY, pos.mYaw, mCurrentPose.mX,
+             mCurrentPose.mY, mCurrentPose.mYaw );
+  CVelocity2d vel = mDrivetrain->getVelocity();
+  transform( mAngle, vel.mXDot, vel.mYDot, vel.mYawDot, mCurrentVelocity.mXDot,
+             mCurrentVelocity.mYDot, mCurrentVelocity.mYawDot );
   mElapsedStateTime += dt;
   mAccumulatedRunTime += dt;
-  mVoltageLpf = mVoltageLpf + ( mRobot->getUpdateInterval() / TAU_VOLTAGE_LPF )
-                * ( mPowerPack->getVoltage() - mVoltageLpf );
-  mRobotPose = mOdo->getPose() - mPreviousPose; // differential pose
-  mPreviousPose = mOdo->getPose();
   mDataLogger->write( mAccumulatedRunTime );
-  mServer.update();
-  mObstacleAvoider->update( mAccumulatedRunTime,
-                            mDrivetrain->getOdometry()->getPose(),
-                            mDrivetrain->getVelocity() );
+  mObstacleAvoider->update( mAccumulatedRunTime, mCurrentPose ,
+                            mCurrentVelocity );
 
 //******************************** START FSM **********************************
   switch ( mState ) {
     case START:
-      mTextDisplay->setText( "Start" );
       mState = WORK;
       break;
 
     case WORK:
-      mTextDisplay->setText( "Work" );
-      actionWork();
-      if ( isAtCargoBay() && mElapsedStateTime > 20.0 )
+      if ( actionWork() == COMPLETED )
+        mState = SEARCH;
+      break;
+
+    case SEARCH:
+      if ( actionSearch() == COMPLETED )
         mState = mIsLoaded ? DUMP : LOAD;
       break;
 
     case LOAD:
-      mTextDisplay->setText( "Load" );
       if ( actionLoad() == COMPLETED )
         mState = WORK;
       break;
 
     case DUMP:
-      mTextDisplay->setText( "Dump" );
       if ( actionDump() == COMPLETED )
-        mState = WORK;
+        mState = ( mFlags < NUM_FLAGS ) ? WORK : QUIT;
       break;
 
     case PAUSE: // state transitions done below
-      mTextDisplay->setText( "Pause" );
       actionPause();
       break;
 
-    case QUIT: // state transitions done below
-      mTextDisplay->setText( "Quit" );
+    case QUIT:
+      PRT_STATUS( "Quitting...");
       mRobot->quit();
       break;
 
     default:
-      PRT_WARN1( "Unknown FSM state %d", mState );
+      PRT_WARN1( "Unknown state #%d", mState );
       mState = START;
       break;
   }
-
 //******************************** END FSM ************************************
 
   // advance states for next time step
@@ -265,7 +268,7 @@ void CChatterboxCtrl::updateData( float dt )
   else {
     mIsStateChanged = false;
   }
-  prevTimestepState = mState;
+  prevTimestepState = mState; 
 
   // check for any errors
   if ( rapiError->hasError() ) {

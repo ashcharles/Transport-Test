@@ -1,0 +1,68 @@
+# World for chatterboxes in TASC7000 
+# Authors: Ash Charles Richard Vaughan
+
+include "chatterbox.inc"
+include "chatterbox_charger.inc"
+include "map.inc"
+
+interval_sim 100  # simulation timestep in milliseconds
+
+paused 1 # start off paused
+quit_time 3605
+resolution 0.02
+
+# configure the GUI window
+window
+( 
+  size [ 788.000 842.000 ] 
+  center [ 4.903 1.515 ] 
+  rotate [ 0 0 ]
+  scale 63.153 
+  pcam_loc [ 0 -4.000 2.000 ]
+  pcam_angle [ 70.000 0 ]
+  pcam_on 0
+  show_data 1
+  show_flags 1
+  interval 50
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "cave"
+  size [10.750 7.000 0.600]
+  pose [5.375 3.500 0 0]
+  #bitmap "tasc7000_simple.png"
+  bitmap "tasc7000_complex.png"
+  gui_move 0
+)
+
+# Home zone 
+zone
+(
+  color "red"
+  pose [ 10.250 0.500 0 0 ]
+  name "sink"
+  gui_move 0
+)
+
+# Goal zone
+zone
+(
+  color "green"
+  pose [ 0.500 6.500 0 0 ]
+  name "source"
+  gui_move 0
+)
+
+# Our robots with some options
+define autorob chatterbox 
+(		 
+  ctrl "transport"
+)
+autorob ( pose [10.25 0.5 0.0 135]  joules 100000 )
+
+# Chargers as fiducials
+charge_station ( pose [9.550 0.100 0 -120.000] ) # home fiducials 
+charge_station ( pose [1.200 6.900 0 60.000] ) # goal fiducials 
+

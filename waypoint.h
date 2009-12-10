@@ -32,12 +32,12 @@ class CWaypointList
     void populateStageWaypoints(
       std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints,
       CPose2d poseOffset );
+    bool mFgAtEnd;
   private:
     std::list<CWaypoint2d> mWaypoints;
     std::list<CWaypoint2d>::iterator mCurrentWaypoint;
     //CWaypoint2d mCurrentWaypoint;
     bool mFgAtWaypoint;
-
 };
 
 

@@ -21,22 +21,23 @@
 #ifndef CHATTERBOXCTRL_H
 #define CHATTERBOXCTRL_H
 
+//#define CHATTERBOX // defined if running on chatterbox
+
 #include <stdio.h>
 #include <unistd.h>
-#include <poll.h>
-#include <list>
 #include <string>
-#include "robotrpcserver.h"
+#include <RapiStage>
 #include <RapiLooseStage>
+#include <RapiChatterbox>
 #include "nd.h"
 #include "waypoint.h"
 
 using namespace Rapi;
 
 /** Type definition for state of FSM */
-typedef enum { START, WORK, LOAD, DUMP, PAUSE, QUIT, NUM_STATES } tState;
+typedef enum { START, WORK, SEARCH, LOAD, DUMP, PAUSE, QUIT } tState;
 /** Type definition for iRobot Create buttons */ 
-typedef enum { PLAY_BUTTON, FAST_FORWARD_BUTTON, NUM_BUTTONS } tButton;
+typedef enum { PLAY_BUTTON, FAST_FORWARD_BUTTON } tButton;
 /** Type definition for action results */ 
 typedef enum { COMPLETED, IN_PROGRESS } tActionResult;
 
@@ -65,61 +66,46 @@ class CChatterboxCtrl : public ARobotCtrl
     tActionResult actionDump();
     /** <EM>Pause</EM> action */
     tActionResult actionPause();
-    /**
-     * Check if we have reached a waypoint 
-     * @return true if we are close to waypoint 
-     */
-    bool isAtGoal();
-    /**
-     * Check if we can see a charger
-     * @return true if we see a charger
-     */
-    bool isChargerDetected();
-    /**
-     * Checks if charging is required
-     * @return true if required, false otherwise
-     */
-    bool isChargingRequired();
+    /** <EM>Search</EM> action */
+    tActionResult actionSearch();
     /**
      * Checks if we are at a source or sink
      * @return true if we are there
      */
     bool isAtCargoBay();
     /**
+     * Checks if we see a charger 
+     * @return true if we see charger
+     */
+    bool isChargerDetected();
+    /**
      * Update controller for the current time step
      * @param dt time since last upate [s]
      */
-    void updateData(float dt);
+    void updateData( float dt );
     //------------- devices ------------//
     /** Drivetrain */
     ADrivetrain2dof * mDrivetrain;
+    /** Generic Range Finder */
+    ARangeFinder * mRangeFinder;
     /** Infrared sensors */
     ARangeFinder * mIr;
-    /** Power pack */
-    APowerPack * mPowerPack;
-    /** Text display */
-    ATextDisplay * mTextDisplay;
     /** Laser range finder */
     ARangeFinder * mLaser;
-    /** Front fiducial */
-    AFiducialFinder * mFrontFiducial;
-    /** Lights */
-    ALights * mLights;
+    /** Fiducial detector for charger */
+    AFiducialFinder * mFiducialDetector;
     /** Odometry from drivetrain */
     COdometry * mOdo;
     /** Data Logger */
     CDataLogger * mDataLogger;
-    /** Current position (relative to robot) */
-    CPose2d mRobotPose;
-    /** Absolution position from previous time step */
-    CPose2d mPreviousPose;
+    /** ego-centric position (relative to start point) */
+    CPose2d mCurrentPose;
+    /** ego-centric velocity (relative to start point) */
+    CVelocity2d mCurrentVelocity;
     /** Nearness Diagram (ND) obstacle avoider */
     CNd * mObstacleAvoider;
     /** Waypoint path */
     CWaypointList * mPath;
-    /** RPC Server */
-    RobotRpcServer mServer;
-
     //------------- variables ------------//
     /** Robot name */
     std::string mName;
@@ -137,8 +123,9 @@ class CChatterboxCtrl : public ARobotCtrl
     float mAccumulatedRunTime;
     /** True if robot is loaded, otherwise false */
     bool mIsLoaded;
-    /** low-pass filtered voltage level */
-    float mVoltageLpf;
+    /** number of flags transported */
+    int mFlags;
+    /** Rotational tranform multipliers */
+    double mAngle;
 };
-
-#endif
+#endif //CHATTERBOXCTRL_H

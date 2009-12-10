@@ -20,9 +20,6 @@
  **************************************************************************/
 
 #include "RapiStage"
-#ifdef RAPI_GUI
-#include "RapiGui"
-#endif
 #include "chatterboxctrl.h"
 
 //------------------------------------------------------------------------------
@@ -32,17 +29,12 @@ extern "C" int Init ( Stg::Model * mod )
   CChatterboxCtrl* robotCtrl = NULL;
 
   // init general stuff
-  ErrorInit ( 4, false );
+  ErrorInit ( 2, false );
   initRandomNumberGenerator();
 
   // create robot and its controller
   robot = new Rapi::CStageRobot( mod );
-  robotCtrl = new CChatterboxCtrl( robot );
-
-#ifdef RAPI_GUI
-  CGui * gui = Rapi::CGui::getInstance( 0, NULL );
-  gui->registerRobot( robot );
-#endif
+  robotCtrl = new CChatterboxCtrl( robot ); 
 
   return 0;
 }
