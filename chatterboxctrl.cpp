@@ -76,7 +76,7 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
   // Setup navigation
   mPath = new CWaypointList( "source2sink.txt" );
   mObstacleAvoider = new CNd( 0.3, 0.3, 0.3, mName,
-                              5 * mRangeFinder->getNumSamples() );
+                              1 * mRangeFinder->getNumSamples() );
   mObstacleAvoider->setEpsilonDistance( 0.3 );
   mObstacleAvoider->setEpsilonAngle( M_PI );
   mObstacleAvoider->addRangeFinder( mRangeFinder );
@@ -133,6 +133,7 @@ tActionResult CChatterboxCtrl::actionWork()
 {
   mPath->update( mCurrentPose );
   mObstacleAvoider->setGoal( mPath->getWaypoint().getPose() );
+  mPath->getWaypoint().getPose().print();
   mDrivetrain->setVelocityCmd( mObstacleAvoider->getRecommendedVelocity() );
   return ( mPath->mFgAtEnd ? COMPLETED : IN_PROGRESS );
 }
