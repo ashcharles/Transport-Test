@@ -60,7 +60,9 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
   mRobot->findDevice( mIr, "ranger:0" );
 #else
   PRT_STATUS( "Running on chatterbox" );
+  mRobot->setUpdateInterval( 0.5 );
   mRobot->findDevice( mDrivetrain, "CB:drivetrain" );
+  ((CCBDrivetrain2dof*) mDrivetrain)->setDefaultOIMode( CB_MODE_FULL );
   mRobot->findDevice( mLaser, "CB:laser" );
   mRobot->findDevice( mFiducialDetector, "CB:front_fiducial" );
   mRobot->findDevice( mIr, "CB:ir" );
@@ -74,7 +76,7 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
   // Setup navigation
   mPath = new CWaypointList( "source2sink.txt" );
   mObstacleAvoider = new CNd( 0.3, 0.3, 0.3, mName,
-                              30 * mRangeFinder->getNumSamples() );
+                              5 * mRangeFinder->getNumSamples() );
   mObstacleAvoider->setEpsilonDistance( 0.3 );
   mObstacleAvoider->setEpsilonAngle( M_PI );
   mObstacleAvoider->addRangeFinder( mRangeFinder );
@@ -138,7 +140,7 @@ tActionResult CChatterboxCtrl::actionWork()
 tActionResult CChatterboxCtrl::actionSearch()
 {
   double turnTime = 10.0; // turn on the spot [s]
-  double goalTime = 2.0; // try to reach new goal [s]
+  double goalTime = 4.0; // try to reach new goal [s]
 
   double modTime = 0.1 * floor( 10 * fmod( mElapsedStateTime,
                                 turnTime + goalTime ) );

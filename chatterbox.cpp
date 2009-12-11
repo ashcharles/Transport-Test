@@ -18,23 +18,57 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
-
-#include "RapiStage"
+#include <signal.h>
 #include "chatterboxctrl.h"
 
-//------------------------------------------------------------------------------
-extern "C" int Init ( Stg::Model * mod )
-{
-  Rapi::CStageRobot* robot = NULL;
-  CChatterboxCtrl* robotCtrl = NULL;
+Rapi::CCBRobot* robot1 = NULL;
+CChatterboxCtrl* robotCtrl = NULL;
 
+//-----------------------------------------------------------------------------
+void quitSig(int signum)
+{
+  PRT_MSG0(4,"User requested ctrl-c");
+
+  // set default signal handler
+  if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
+     PRT_ERR1("Error resetting signal handler %s", strerror(errno));
+  }
+
+  // terminate main thread
+  robot1->quit();
+}
+//------------------------------------------------------------------------------
+int main( void )
+{
   // init general stuff
-  ErrorInit ( 2, false );
+  ErrorInit ( 4, 0);
   initRandomNumberGenerator();
 
-  // create robot and its controller
-  robot = new Rapi::CStageRobot( mod );
-  robotCtrl = new CChatterboxCtrl( robot ); 
+  if( signal( SIGINT, quitSig ) == SIG_ERR ) {
+     PRT_ERR1( "Error resetting signal handler %s", strerror( errno ) );
+  }
 
-  return 0;
+  // create robot and its controller
+  robot1 = new Rapi::CCBRobot();
+  if ( robot1->init() == 0 ) {
+    Rapi::rapiError->print();
+    delete robot1;
+    exit( -1 );
+  }
+  robotCtrl = new CChatterboxCtrl( robot1 );
+
+  // blocking call
+  robot1->run();
+
+  // clean up robot controller
+  if( robotCtrl ) {
+    delete robotCtrl;
+    robotCtrl = NULL;
+  }
+
+  // clean up robot
+  if( robot1 )
+    delete robot1;
+  return 1;
 }
+//------------------------------------------------------------------------------
