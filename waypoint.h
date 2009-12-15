@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <list>
 #include <string>
-#include <RapiCore>
+#include <RapiStage>
 
 using namespace Rapi;
 
@@ -28,6 +28,10 @@ class CWaypointList
     bool atWaypoint( CPose2d myPose );
     /** Return the current waypoint */
     CWaypoint2d getWaypoint();
+    /** This is a STAGE+RAPI specific function */
+    void populateStageWaypoints(
+      std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints,
+      CPose2d poseOffset );
     bool mFgAtEnd;
   private:
     std::list<CWaypoint2d> mWaypoints;

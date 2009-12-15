@@ -94,3 +94,18 @@ CWaypoint2d CWaypointList::getWaypoint()
   return *mCurrentWaypoint;
 }
 //------------------------------------------------------------------------------
+void CWaypointList::populateStageWaypoints(
+  std::vector<Stg::ModelPosition::Waypoint>& stgWaypoints,
+  CPose2d poseOffset )
+{
+  std::list<CWaypoint2d>::iterator it;
+  for( it = mWaypoints.begin(); it != mWaypoints.end(); ++it ) {
+    CPose2d pose = it->getPose() - poseOffset;
+    Stg::ModelPosition::Waypoint stgWaypoint = Stg::ModelPosition::Waypoint();
+    stgWaypoint.pose.x = pose.mX;
+    stgWaypoint.pose.y = pose.mY;
+    stgWaypoint.pose.a = pose.mYaw;
+    stgWaypoint.color = Stg::Color( 0, 0, 1 ); // green
+    stgWaypoints.push_back( stgWaypoint );
+  }
+}
