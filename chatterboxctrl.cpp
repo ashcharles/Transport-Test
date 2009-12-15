@@ -138,7 +138,7 @@ tActionResult CChatterboxCtrl::actionWork()
 tActionResult CChatterboxCtrl::actionSearch()
 {
   double turnTime = 10.0; // turn on the spot [s]
-  double goalTime = 2.0; // try to reach new goal [s]
+  double goalTime = 4.0; // try to reach new goal [s]
 
   double modTime = 0.1 * floor( 10 * fmod( mElapsedStateTime,
                                 turnTime + goalTime ) );
