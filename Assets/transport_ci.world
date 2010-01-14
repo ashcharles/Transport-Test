@@ -32,8 +32,7 @@ floorplan
   name "cave"
   size [10.750 7.000 0.600]
   pose [5.375 3.500 0 0]
-  bitmap "tasc7000_simple.png"
-  #bitmap "tasc7000_complex.png"
+  bitmap "tasc7000_complex.png"
   gui_move 0
 )
 

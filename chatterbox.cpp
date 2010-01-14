@@ -31,6 +31,7 @@ extern "C" int Init ( Stg::Model * mod )
   // init general stuff
   ErrorInit ( 2, false );
   initRandomNumberGenerator();
+  srand( time(NULL) );
 
   // create robot and its controller
   robot = new Rapi::CStageRobot( mod );

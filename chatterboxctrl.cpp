@@ -39,6 +39,7 @@ void transform( double angle, double x0, double y0, double yaw0, double &x1,
 //-----------------------------------------------------------------------------
 CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
 {
+  srand(time(NULL));
   // Initialize robot
   char hostname[20];
   gethostname( hostname, 20 );
@@ -248,7 +249,10 @@ void CChatterboxCtrl::updateData( float dt )
 
     case QUIT:
       PRT_STATUS( "Quitting...");
-      mRobot->quit();
+      if( mIsStateChanged ) {
+        printf( "Result: %f\n", mAccumulatedRunTime );
+        mRobot->quit();
+      }
       break;
 
     default:
