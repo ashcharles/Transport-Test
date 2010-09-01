@@ -44,14 +44,26 @@ define chatterbox create
     watts 1.5 # 6 sensors at 5V AT 50mA max 
   )
 
+# detect charging stations: need two to deal with different heights
+#  fiducial
+#  (
+#    pose [0.000 0.000 -0.007 0.000]
+#    range_min 0.0
+#    range_max 3.0
+#    range_max_id 3.0	
+#    fov 30 
+#    watts 10
+#  )
   fiducial
   (
-    pose [0.165 0.000 -0.005 0.000]
+    pose [0.040 0.000 -0.005 0.000]
     range_min 0.0
     range_max 2.5
     range_max 2.5
     fov 60 
   )
+  # optionally include a laser
+  #sicklaser()
 )
 
 define chatterbox_laser chatterbox
