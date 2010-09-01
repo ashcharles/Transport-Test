@@ -1,0 +1,21 @@
+== Transport Test ==
+This code pilots Chatterbox robots through the lab environment to transport
+pucks while recharging.
+
+This repository has three branches: master, stage and chatterbox. The aim is
+to create a single version of the code in the master branch which can run
+either on simulated robots in stage or on real chatterbox robots with librapi
+as the interface layer.  There are some differences for now so we maintain the
+stage and chatterbox branches independently and merge between them.
+
+== Running in Stage ==
+Switch to the Stage Branch:
+ $ git checkout stage
+Build:
+ $ cmake .
+If not already done, add build directory to STAGEPATH:
+ $ export STAGEPATH=$PWD:$STAGEPATH
+Launch stage:
+ $ stage Assets/transport.world
+
+== Running on the Chatterboxes ==
