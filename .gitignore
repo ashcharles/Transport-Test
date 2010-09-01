@@ -3,3 +3,8 @@
 Build/
 Docs/
 logfile*
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+transport
+Makefile
