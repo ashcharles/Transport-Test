@@ -27,7 +27,6 @@
 #include <unistd.h>
 #include <string>
 #include <RapiStage>
-#include <RapiLooseStage>
 #include <RapiChatterbox>
 #include "nd.h"
 #include "waypoint.h"

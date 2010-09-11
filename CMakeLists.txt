@@ -25,10 +25,8 @@ LINK_DIRECTORIES(
   ${TRACKER_LIBRARY_DIRS}
 )
 
-# get rid of warnings about jsonrpc class initialization
 ADD_DEFINITIONS( -g -Wall )
 
-#ADD_EXECUTABLE( transport
 ADD_LIBRARY( transport MODULE
   chatterbox.cpp
   chatterboxctrl.cpp
@@ -43,12 +41,10 @@ TARGET_LINK_LIBRARIES( transport
   ${TRACKER_LIBRARIES}
 )
 
+# loader program for Chatterboxes
 FIND_LIBRARY( LTDL_LIB ltdl )
 ADD_EXECUTABLE( loader loader.cpp )
 TARGET_LINK_LIBRARIES( loader ${LTDL_LIB} )
 
-ADD_LIBRARY( mymod MODULE mymod.cpp )
-
 # delete the "lib" prefix from the plugin libraries
 SET_TARGET_PROPERTIES( transport PROPERTIES PREFIX "" )
-SET_TARGET_PROPERTIES( mymod PROPERTIES PREFIX "" )

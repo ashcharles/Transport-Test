@@ -21,57 +21,59 @@
 #include <signal.h>
 #include "chatterboxctrl.h"
 
-//Rapi::CCBRobot* robot1 = NULL;
-Rapi::CStageRobot* robot1 = NULL;
-CChatterboxCtrl* robotCtrl = NULL;
+// robotCb needs global scope for signal handler
+// robotStage needs to live on passed initialisation
+CCBRobot* robotCB = NULL;
+CStageRobot* robotStage = NULL;
 
 //-----------------------------------------------------------------------------
-void quitSig(int signum)
-{
-  PRT_MSG0(4,"User requested ctrl-c");
-
-  // set default signal handler
-  if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
-     PRT_ERR1("Error resetting signal handler %s", strerror(errno));
-  }
-
-  // terminate main thread
-  robot1->quit();
+// Handle Ctrl+C on Chatterboxes.
+void gotQuitSig(int signum) {
+	PRT_MSG0(4,"User requested Ctrl+C");
+	if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
+		PRT_ERR1("Error resetting signal handler %s", strerror(errno));
+	}
+	robotCB->quit();
 }
 //------------------------------------------------------------------------------
-extern "C" int Init ( Stg::Model * mod )
-//int main( void )
-{
-  // init general stuff
-  ErrorInit ( 4, 0);
-  initRandomNumberGenerator();
+// Load point for Chatterbox Robots
+extern "C" int InitCB(std::string args) {
+	ErrorInit(4, 0);
+	initRandomNumberGenerator();
+	robotCB = new CCBRobot();
+	if (robotCB->init() == 0) {
+		Rapi::rapiError->print();
+		delete robotCB;
+		return -1;
+	}
+	// TODO: do I actually need this?
+	if (signal(SIGINT, gotQuitSig) == SIG_ERR) {
+		PRT_ERR1( "Error setting signal handler %s", strerror( errno ) );
+	}
+	CChatterboxCtrl* robotCtrl = new CChatterboxCtrl(robotCB);
+	// Blocking call
+	robotCB->run();
 
-  if( signal( SIGINT, quitSig ) == SIG_ERR ) {
-     PRT_ERR1( "Error resetting signal handler %s", strerror( errno ) );
-  }
-
-  // create robot and its controller
-  robot1 = new Rapi::CStageRobot( mod );
-  if ( robot1->init() == 0 ) {
-    Rapi::rapiError->print();
-    delete robot1;
-    exit( -1 );
-  }
-  robotCtrl = new CChatterboxCtrl( robot1 );
-  return 0;
-
-  // blocking call
-//  robot1->run();
-//
-//  // clean up robot controller
-//  if( robotCtrl ) {
-//    delete robotCtrl;
-//    robotCtrl = NULL;
-//  }
-//
-//  // clean up robot
-//  if( robot1 )
-//    delete robot1;
-//  return 1;
+	if (robotCtrl) {
+		delete robotCtrl;
+		robotCtrl = NULL;
+	}
+	if (robotCB)
+		delete robotCB;
+	return 0;
+}
+//------------------------------------------------------------------------------
+// Load point for Stage Robots
+extern "C" int Init(Stg::Model * mod, Stg::CtrlArgs* args) {
+	ErrorInit(4, 0);
+	initRandomNumberGenerator();
+	robotStage = new Rapi::CStageRobot(mod);
+	if (robotStage->init() == 0) {
+		Rapi::rapiError->print();
+		delete robotStage;
+		return -1;
+	}
+	CChatterboxCtrl* robotCtrl = new CChatterboxCtrl(robotStage);
+	return 0;
 }
 //------------------------------------------------------------------------------

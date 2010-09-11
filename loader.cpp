@@ -7,31 +7,40 @@
 
 #include <ltdl.h>
 #include <stdio.h>
+#include <string>
 
-int main()
-{
-	lt_dlhandle handle;
-	void * func;
-	int (*myfunc)(int, int);
-	int z = 0;
+//------------------------------------------------------------------------------
+// handle errors from ltdl
+int ltdlError() {
+	printf("Libtool error: %s\nQuitting...\n", lt_dlerror());
+	lt_dlexit(); // okay if it fails...we're just trying to clean up.
+	return -1;
+}
+//------------------------------------------------------------------------------
+// dlopen chatterbox controller and run
+int main(int argc, char* argv[]) {
+	// build a string of command line args to pass to controller.
+	std::string args;
+	for (int i = 1; i < argc; i++) {
+		args.append(argv[i]);
+	}
 
-	if ( lt_dlinit() != 0 ) { goto ltdl_fail; }
-	handle = lt_dlopenext( "libmymod" );
-	if ( ! handle ) { goto ltdl_fail; }
-	func = lt_dlsym( handle, "Init" );
-	if (! func ) { goto ltdl_fail; }
-	myfunc = (int(*)(int,int)) func;
+	// load module
+	if (lt_dlinit() != 0) {
+		return ltdlError();
+	}
+	lt_dlhandle handle = lt_dlopenext("transport");
+	if (!handle) {
+		return ltdlError();
+	}
+	int (*initCB_func)(std::string) = (int(*)(std::string)) lt_dlsym(handle, "InitCB");
+	if (!initCB_func) {
+		return ltdlError();
+	}
+	initCB_func(args);
 
-    z = myfunc(2,3);
-	printf("Successfully opened! %d\n", z);
-
-	if ( lt_dlexit() != 0 ) { goto ltdl_fail; }
+	if (lt_dlexit() != 0) {
+		return ltdlError();
+	}
 	return 0;
-
-// GOTO label to handle ltdl error. An irritating construct but we don't
-// have exceptions available in ltdl.
-ltdl_fail:
-    printf("Libtool error: %s\nQuitting...\n", lt_dlerror());
-    lt_dlexit(); // okay if it fails...we're just trying to clean up.
-    return -1;
 }
