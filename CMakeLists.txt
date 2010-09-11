@@ -43,6 +43,11 @@ TARGET_LINK_LIBRARIES( transport
   ${TRACKER_LIBRARIES}
 )
 
+FIND_LIBRARY( LTDL_LIB ltdl )
+ADD_EXECUTABLE( loader loader.cpp )
+TARGET_LINK_LIBRARIES( loader ${LTDL_LIB} )
+
+
 # delete the "lib" prefix from the plugin libraries
 SET_TARGET_PROPERTIES( transport PROPERTIES PREFIX "" )
 
