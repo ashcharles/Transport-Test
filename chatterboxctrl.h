@@ -21,13 +21,13 @@
 #ifndef CHATTERBOXCTRL_H
 #define CHATTERBOXCTRL_H
 
-#define CHATTERBOX // defined if running on chatterbox
+//#define CHATTERBOX // defined if running on chatterbox
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string>
-//#include <RapiStage>
-//#include <RapiLooseStage>
+#include <RapiStage>
+#include <RapiLooseStage>
 #include <RapiChatterbox>
 #include "nd.h"
 #include "waypoint.h"
@@ -125,7 +125,7 @@ class CChatterboxCtrl : public ARobotCtrl
     bool mIsLoaded;
     /** number of flags transported */
     int mFlags;
-    /** Rotational tranform multipliers */
+    /** Rotational transform multipliers */
     double mAngle;
 };
 #endif //CHATTERBOXCTRL_H
