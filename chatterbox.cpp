@@ -21,7 +21,8 @@
 #include <signal.h>
 #include "chatterboxctrl.h"
 
-Rapi::CCBRobot* robot1 = NULL;
+//Rapi::CCBRobot* robot1 = NULL;
+Rapi::CStageRobot* robot1 = NULL;
 CChatterboxCtrl* robotCtrl = NULL;
 
 //-----------------------------------------------------------------------------
@@ -38,7 +39,8 @@ void quitSig(int signum)
   robot1->quit();
 }
 //------------------------------------------------------------------------------
-int main( void )
+extern "C" int Init ( Stg::Model * mod )
+//int main( void )
 {
   // init general stuff
   ErrorInit ( 4, 0);
@@ -49,26 +51,27 @@ int main( void )
   }
 
   // create robot and its controller
-  robot1 = new Rapi::CCBRobot();
+  robot1 = new Rapi::CStageRobot( mod );
   if ( robot1->init() == 0 ) {
     Rapi::rapiError->print();
     delete robot1;
     exit( -1 );
   }
   robotCtrl = new CChatterboxCtrl( robot1 );
+  return 0;
 
   // blocking call
-  robot1->run();
-
-  // clean up robot controller
-  if( robotCtrl ) {
-    delete robotCtrl;
-    robotCtrl = NULL;
-  }
-
-  // clean up robot
-  if( robot1 )
-    delete robot1;
-  return 1;
+//  robot1->run();
+//
+//  // clean up robot controller
+//  if( robotCtrl ) {
+//    delete robotCtrl;
+//    robotCtrl = NULL;
+//  }
+//
+//  // clean up robot
+//  if( robot1 )
+//    delete robot1;
+//  return 1;
 }
 //------------------------------------------------------------------------------
