@@ -12,13 +12,19 @@ int main()
 {
 	lt_dlhandle handle;
 	void * func;
+	int (*myfunc)(int, int);
+	int z = 0;
 
 	if ( lt_dlinit() != 0 ) { goto ltdl_fail; }
-	handle = lt_dlopenext( "transport" );
+	handle = lt_dlopenext( "libmymod" );
 	if ( ! handle ) { goto ltdl_fail; }
 	func = lt_dlsym( handle, "Init" );
 	if (! func ) { goto ltdl_fail; }
-	printf("Successfully opened!\n");
+	myfunc = (int(*)(int,int)) func;
+
+    z = myfunc(2,3);
+	printf("Successfully opened! %d\n", z);
+
 	if ( lt_dlexit() != 0 ) { goto ltdl_fail; }
 	return 0;
 

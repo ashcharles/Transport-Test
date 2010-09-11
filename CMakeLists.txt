@@ -47,8 +47,8 @@ FIND_LIBRARY( LTDL_LIB ltdl )
 ADD_EXECUTABLE( loader loader.cpp )
 TARGET_LINK_LIBRARIES( loader ${LTDL_LIB} )
 
+ADD_LIBRARY( mymod MODULE mymod.cpp )
 
 # delete the "lib" prefix from the plugin libraries
 SET_TARGET_PROPERTIES( transport PROPERTIES PREFIX "" )
-
-#MESSAGE(STATUS "Remember to add the module path to the STAGEPATH variable" )
+SET_TARGET_PROPERTIES( mymod PROPERTIES PREFIX "" )
