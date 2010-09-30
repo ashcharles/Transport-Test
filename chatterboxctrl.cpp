@@ -1,7 +1,6 @@
 /***************************************************************************
  * Project: ash-test (RAPI)                                                *
  * Author:  Ash Charles (jac27@sfu.ca)                                     *
- * $Id: chatterboxctrl.cpp,v 1.5 2009-09-01 20:04:06 gumstix Exp $
  ***************************************************************************
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,6 +17,11 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
+#include <stdio.h>
+#include <unistd.h>
+#include <string>
+#include <vector>
+#include <boost/program_options.hpp>
 #include "chatterboxctrl.h"
 
 /** Number of flags to transport */
@@ -28,16 +32,7 @@ const std::string StateNames[] = { "Start", "Work", "Search", "Load",
                                    "Dump", "Pause", "Quit" };
 
 //-----------------------------------------------------------------------------
-/** Utility function to transform coordinate systems */
-void transform( double angle, double x0, double y0, double yaw0, double &x1,
-                double &y1, double &yaw1 )
-{
-  x1 = cos( angle ) * x0 + sin( angle ) * y0;
-  y1 = -sin( angle ) * x0 + cos( angle ) * y0;
-  yaw1 = yaw0;
-}
-//-----------------------------------------------------------------------------
-CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
+CChatterboxCtrl::CChatterboxCtrl( ARobot* robot, std::string args) : ARobotCtrl( robot )
 {
   // Initialize robot
   char hostname[20];
@@ -50,23 +45,17 @@ CChatterboxCtrl::CChatterboxCtrl( ARobot* robot ) : ARobotCtrl( robot )
   mFlags = 0;
   mElapsedStateTime = 0.0;
   mAccumulatedRunTime = 0.0;
+  parseArgs(args);
 
   // get robot devices
-#ifndef CHATTERBOX 
-  PRT_STATUS( "Running simulation in Stage" );
   mRobot->findDevice( mDrivetrain, "drivetrain:0" );
-  mRobot->findDevice( mLaser, "laser:0" );
   mRobot->findDevice( mFiducialDetector, "fiducial:0" );
-  mRobot->findDevice( mIr, "ranger:0" );
-#else
-  PRT_STATUS( "Running on chatterbox" );
-  mRobot->setUpdateInterval( 0.5 );
-  mRobot->findDevice( mDrivetrain, "CB:drivetrain" );
-  ((CCBDrivetrain2dof*) mDrivetrain)->setDefaultOIMode( CB_MODE_FULL );
-  mRobot->findDevice( mLaser, "CB:laser" );
-  mRobot->findDevice( mFiducialDetector, "CB:front_fiducial" );
-  mRobot->findDevice( mIr, "CB:ir" );
-#endif
+  mRobot->findDevice( mIr, "ranger:0");
+
+  // TODO: fix these chatterbox specific commands
+  //mRobot->setUpdateInterval( 0.5 );
+  //((CCBDrivetrain2dof*) mDrivetrain)->setDefaultOIMode( CB_MODE_FULL );
+
   mRangeFinder = mIr;
   if( mLaser ) {
     PRT_STATUS( "Using a laser device" );
@@ -98,6 +87,28 @@ CChatterboxCtrl::~CChatterboxCtrl()
     delete mObstacleAvoider;
   if( mPath )
     delete mPath;
+}
+//-----------------------------------------------------------------------------
+void CChatterboxCtrl::parseArgs(std::string args)
+{
+    using namespace boost::program_options;
+    options_description desc("Robot Controller Options");
+    desc.add_options()
+        ("speed,s", value<double>(&mSpeed)->default_value(0.5), "set robot speed")
+        ("laser,l", "use laser scanner")
+    ;
+
+   std::vector<std::string> argv;
+   Tokenize(args, argv);
+   basic_command_line_parser<char> parser(argv);
+   parser.options(desc);
+   variables_map vm;
+   store(parser.run(), vm);
+   notify(vm);
+
+   if (vm.count("laser"))
+	   mRobot->findDevice( mLaser, "laser:0" );
+
 }
 //-----------------------------------------------------------------------------
 bool CChatterboxCtrl::isAtCargoBay()
@@ -277,3 +288,27 @@ void CChatterboxCtrl::updateData( float dt )
     rapiError->print();
   }
 } // updateData
+
+//*************************** Utility Functions *******************************
+//-----------------------------------------------------------------------------
+void transform( double angle, double x0, double y0, double yaw0, double &x1,
+                double &y1, double &yaw1 )
+{
+  x1 = cos( angle ) * x0 + sin( angle ) * y0;
+  y1 = -sin( angle ) * x0 + cos( angle ) * y0;
+  yaw1 = yaw0;
+}
+//-----------------------------------------------------------------------------
+void Tokenize(const std::string& str, std::vector<std::string>& tokens,
+		      const std::string& delimiters)
+{
+    std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+    std::string::size_type pos = str.find_first_of(delimiters, lastPos);
+
+    while (std::string::npos != pos || std::string::npos != lastPos) {
+        tokens.push_back(str.substr(lastPos, pos - lastPos));
+        lastPos = str.find_first_not_of(delimiters, pos);
+        pos = str.find_first_of(delimiters, lastPos);
+    }
+}
+

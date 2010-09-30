@@ -1,0 +1,66 @@
+# Maze demo world for obstacle avoidance library
+# Robots should navigate through the maze from the green starting zone to the
+# yellow end zone.  Any one of several different obstacle avoidance techniques
+# can be used to perform navigation although not all will actually navigate
+# through the maze.
+# Visualizations are provided by the obstacle avoidance viz library which
+# depends on both Stage and the obstacle avoidance library.
+# Author: Ash Charles
+include "chatterbox.inc"
+include "chatterbox_charger.inc"
+include "map.inc"
+
+interval_sim 100  # simulation timestep in milliseconds
+paused 1
+resolution 0.02
+
+# configure the GUI window
+window
+( 
+  size [ 800.000 800.000 ] 
+
+  center [ 0.0 0.0 ] 
+  rotate [ 0 0 ]
+  scale 14 
+
+  pcam_loc [ 0 0.000 0.000 ]
+  pcam_angle [ 90.000 0 ]
+  pcam_on 0
+  
+  show_data 1
+  show_flags 0
+  show_grid 0
+
+  interval 50
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "maze"
+  size [50.000 50.000 0.600]
+  pose [0 0 0 0]
+  bitmap "maze.png"
+)
+
+zone
+(
+  color "green"
+  pose [ 24.000 -24.000 0 0 ]
+  name "start"
+)
+
+zone
+(
+  color "yellow"
+  pose [-1.000 -1.000 0 0 ]
+  name "finish"
+)
+
+define mazebot chatterbox 
+(		 
+  ctrl "wander_chatterbox"
+  joules  155520
+)
+
+mazebot( pose [20.000 -24.000  0 180.000] )

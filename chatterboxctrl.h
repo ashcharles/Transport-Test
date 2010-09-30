@@ -21,15 +21,11 @@
 #ifndef CHATTERBOXCTRL_H
 #define CHATTERBOXCTRL_H
 
-//#define CHATTERBOX // defined if running on chatterbox
-
-#include <stdio.h>
-#include <unistd.h>
-#include <string>
 #include <RapiStage>
 #include <RapiChatterbox>
 #include "nd.h"
 #include "waypoint.h"
+
 
 using namespace Rapi;
 
@@ -50,13 +46,21 @@ class CChatterboxCtrl : public ARobotCtrl
     /**
      * Default constructor
      * @param robot this controller controls
+     * @param argument string
      */
-    CChatterboxCtrl ( ARobot* robot );
+    CChatterboxCtrl ( ARobot* robot, std::string args);
     /** Default destructor */
     ~CChatterboxCtrl();
 
   private:
     //------------- functions ------------//
+    /** Look for arguments passed into the controller using --args "..."
+     *  We are looking for:
+     *  -s|--speed <double>		base robot speed
+     *  -l|--laser				use laser
+     *  -i|--ir					use ir
+     */
+    void parseArgs(std::string args);
     /** <EM>Run</EM> action */
     tActionResult actionWork();
     /** <EM>Loading</EM> action */
@@ -126,5 +130,20 @@ class CChatterboxCtrl : public ARobotCtrl
     int mFlags;
     /** Rotational transform multipliers */
     double mAngle;
+    /** Base speed value */
+    double mSpeed;
 };
+// Define some utility functions
+/** Utility function to transform coordinate systems */
+void transform( double angle, double x0, double y0, double yaw0, double &x1,
+                double &y1, double &yaw1 );
+/**
+ *  Split a string into substrings given a list of delimiters.
+ *
+ *  Boost::program_options versions < 1.4 don't include the split_unix function
+ *  so we want to a built-in way to parse an argument string in to a vector
+ *  of individual arguments that can be used by Boost::program_options.
+ */
+void Tokenize(const std::string& str, std::vector<std::string>& tokens,
+		      const std::string& delimiters = " ");
 #endif //CHATTERBOXCTRL_H

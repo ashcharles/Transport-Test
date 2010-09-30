@@ -20,6 +20,6 @@ Build:
 If not already done, add build directory to STAGEPATH:
  $ export STAGEPATH=$PWD:$STAGEPATH
 Launch stage:
- $ stage Assets/transport.world
+ $ stage Assets/transport.world --args "--speed 0.3 --laser --ir"
 
 == Running on the Chatterboxes ==

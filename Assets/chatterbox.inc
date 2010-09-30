@@ -63,5 +63,5 @@ define chatterbox create
     fov 60 
   )
   # optionally include a laser
-  #sicklaser()
+  sicklaser()
 )

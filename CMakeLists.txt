@@ -9,6 +9,8 @@ PKG_SEARCH_MODULE(RAPISTAGE REQUIRED autolab-rapi-stage)
 PKG_SEARCH_MODULE(ND REQUIRED autolab-nd)
 PKG_SEARCH_MODULE(TRACKER REQUIRED autolab-rapi-autolabtracker)
 
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 INCLUDE_DIRECTORIES(
   ${RAPI_INCLUDE_DIRS}
   ${RAPISTAGE_INCLUDE_DIRS}
@@ -39,6 +41,20 @@ TARGET_LINK_LIBRARIES( transport
   ${RAPICB_LIBRARIES}
   ${ND_LIBRARIES}
   ${TRACKER_LIBRARIES}
+  ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+)
+
+ADD_LIBRARY( wander_chatterbox MODULE
+  wander_chatterbox.cpp
+)
+
+TARGET_LINK_LIBRARIES( wander_chatterbox
+  ${RAPI_LIBRARIES}
+  ${RAPISTAGE_LIBRARIES}
+  ${RAPICB_LIBRARIES}
+  ${ND_LIBRARIES}
+  ${TRACKER_LIBRARIES}
+  ${Boost_PROGRAM_OPTIONS_LIBRARIES}
 )
 
 # loader program for Chatterboxes
@@ -48,3 +64,4 @@ TARGET_LINK_LIBRARIES( loader ${LTDL_LIB} )
 
 # delete the "lib" prefix from the plugin libraries
 SET_TARGET_PROPERTIES( transport PROPERTIES PREFIX "" )
+SET_TARGET_PROPERTIES( wander_chatterbox PROPERTIES PREFIX "" )

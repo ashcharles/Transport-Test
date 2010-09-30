@@ -19,9 +19,13 @@ int ltdlError() {
 //------------------------------------------------------------------------------
 // dlopen chatterbox controller and run
 int main(int argc, char* argv[]) {
+        if ( argc < 1 ) {
+            printf("Usage: loader <controller module name> [<controller args>]\n");
+            exit(-1);
+        }
 	// build a string of command line args to pass to controller.
 	std::string args;
-	for (int i = 1; i < argc; i++) {
+	for (int i = 2; i < argc; i++) {
 		args.append(argv[i]);
 	}
 
@@ -29,7 +33,9 @@ int main(int argc, char* argv[]) {
 	if (lt_dlinit() != 0) {
 		return ltdlError();
 	}
-	lt_dlhandle handle = lt_dlopenext("transport");
+	printf("Opening %s\n", argv[1]);
+	//lt_dlhandle handle = lt_dlopenext("moo");
+	lt_dlhandle handle = lt_dlopen(argv[1]);
 	if (!handle) {
 		return ltdlError();
 	}
