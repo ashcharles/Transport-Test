@@ -29,7 +29,7 @@ window
 # load an environment bitmap
 floorplan
 ( 
-  name "cave"
+  name "background"
   size [10.750 7.000 0.600]
   pose [5.375 3.500 0 0]
   #bitmap "tasc7000_simple.png"
@@ -64,5 +64,4 @@ autorob ( pose [10.25 0.5 0.0 135]  joules 100000 )
 
 # Chargers as fiducials
 charge_station ( pose [9.550 0.100 0 -120.000] ) # home fiducials 
-charge_station ( pose [1.200 6.900 0 60.000] ) # goal fiducials 
-
+charge_station ( pose [1.200 6.900 0 60.000] ) # goal fiducials
