@@ -54,7 +54,8 @@ CPose2d getCarrotGoal(CPose2d pose, double r, double angleOff = 0.0) {
 class WanderChatterbox: public ARobotCtrl {
 public:
 	WanderChatterbox(ARobot* robot) :
-		ARobotCtrl(robot), mTime(0.0), mMapName("background") {
+		ARobotCtrl(robot), mTime(0.0), mMapName("background"), mCurrGoal(0.0,
+				0.0, 0.0) {
 		mRobot->findDevice(mDrivetrain, "drivetrain:0");
 		mRobot->findDevice(mIr, "ranger:0");
 		mObstacleAvoider = new CNd(0.15, 0.15, 0.15, "wander", 40
@@ -62,15 +63,15 @@ public:
 		mObstacleAvoider->addRangeFinder(mIr);
 		mCurrPose = mDrivetrain->getOdometry()->getPose();
 		// dirty hacks for stage model
-		Stg::Model* model = static_cast<CStageRobot*> (robot)->mStageModel;
-		std::string mapModel("mapmodel");
-		model->SetProperty(mapModel, (void*) &mMapName);
-		std::string wavefrontKey("wavefrontcellsize");
-		double cellSize = 0.2;
-		model->SetProperty(wavefrontKey, static_cast<void*>(&cellSize));
-		mGridMap = new CStageGridMap(model);
-		mPlanner = new CStageWaveFrontMap(mGridMap);
-		mPlanner->setRobotPose(&mCurrPose);
+		//Stg::Model* model = static_cast<CStageRobot*> (robot)->mStageModel;
+		//std::string mapModel("mapmodel");
+		//model->SetProperty(mapModel, (void*) &mMapName);
+		//std::string wavefrontKey("wavefrontcellsize");
+		//float cellSize = 0.15;
+		//model->SetProperty(wavefrontKey, static_cast<void*> (&cellSize));
+		//mGridMap = new CStageGridMap(model);
+		//mPlanner = new CStageWaveFrontMap(mGridMap);
+		//mPlanner->setRobotPose(&mCurrPose);
 	}
 	;
 	~WanderChatterbox() {
@@ -90,28 +91,36 @@ private:
 	CStageGridMap * mGridMap;
 	CStageWaveFrontMap * mPlanner;
 	std::list<CWaypoint2d> mWaypointList;
-	CPose2d mInitPose, mCurrPose;
+	CPose2d mInitPose, mCurrPose, mCurrGoal, mAdjPose;
 	double mTime;
 	std::string mMapName;
 
 	void updateData(float dt) {
 		mTime += dt;
 		mCurrPose = mDrivetrain->getOdometry()->getPose();
-		//mObstacleAvoider->setGoal(getCarrotGoal(mCurrPose, 3.0));
-		mCurrPose.print();
-		//mObstacleAvoider->setGoal(CPose2d(0.0, 0.0, 0.0));
-		mObstacleAvoider->setGoal(getWaypointGoal());
+		mObstacleAvoider->setGoal(getCarrotGoal(mCurrPose, 3.0));
+		//mObstacleAvoider->setGoal(getWaypointGoal());
 		mObstacleAvoider->update(mTime, mCurrPose, mDrivetrain->getVelocity());
 		mDrivetrain->setVelocityCmd(mObstacleAvoider->getRecommendedVelocity());
 	}
 	;
 	CPose2d getWaypointGoal() {
-		mPlanner->calculateWaveFront(CPose2d(0, 0, 0.0));
-		if (mPlanner->calculatePlanFrom(mCurrPose) != -1) {
+		// This is kludgy---grid map expects the centre of the map to be (0,0)
+		mAdjPose.mX = mCurrPose.mX-5.25;
+		mAdjPose.mY = mCurrPose.mY-3;
+		mAdjPose.mYaw = mCurrPose.mYaw;
+		mPlanner->setRobotPose(&mAdjPose);
+		mPlanner->calculateWaveFront(mCurrGoal);
+		if (mPlanner->calculatePlanFrom(mAdjPose) != -1) {
 			mPlanner->getWaypointList(mWaypointList);
 		}
-		mWaypointList.pop_front(); // pop current location off
-		CPose2d goal = mWaypointList.front().getPose();
+		CPose2d goal(0.0, 0.0, 0.0);
+		if (mWaypointList.empty()) {
+			PRINT_ERR("Waypoint List is empty");
+		} else {
+			mWaypointList.pop_front(); // pop current location off
+			goal = mWaypointList.front().getPose();
+		}
 		goal.print();
 		return goal;
 	}
